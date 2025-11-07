@@ -89,7 +89,7 @@ jobs:
             ${{ runner.os }}-
 
       - name: Run tests
-        run: sbt ++${{ matrix.scala }} -Dsbt.log.noformat=true test
+        run: sbt -Dsbt.log.noformat=true ++${{ matrix.scala }} test
 
       - name: Upload test reports
         if: failure()

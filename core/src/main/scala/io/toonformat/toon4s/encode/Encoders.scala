@@ -6,6 +6,17 @@ import io.toonformat.toon4s.{Delimiter, EncodeOptions}
 import Primitives._
 
 object Encoders {
+  def encodeTo(value: JsonValue, out: java.io.Writer, options: EncodeOptions): Unit = value match {
+    case JNull | JBool(_) | JNumber(_) | JString(_) =>
+      out.write(encodePrimitive(value, options.delimiter))
+    case JArray(values)                             =>
+      val writer = new StreamLineWriter(options.indent, out)
+      encodeArray(None, values, writer, 0, options)
+    case JObj(fields)                               =>
+      val writer = new StreamLineWriter(options.indent, out)
+      encodeObject(fields, writer, 0, options)
+  }
+
   def encode(value: JsonValue, options: EncodeOptions): String = value match {
     case JNull | JBool(_) | JNumber(_) | JString(_) =>
       encodePrimitive(value, options.delimiter)
@@ -44,7 +55,7 @@ object Encoders {
 
   private def encodeObject(
       fields: Map[String, JsonValue],
-      writer: LineWriter,
+      writer: EncodeLineWriter,
       depth: Int,
       options: EncodeOptions
   ): Unit = {
@@ -57,7 +68,7 @@ object Encoders {
   private def encodeKeyValue(
       key: String,
       value: JsonValue,
-      writer: LineWriter,
+      writer: EncodeLineWriter,
       depth: Int,
       options: EncodeOptions
   ): Unit = value match {
@@ -106,7 +117,7 @@ object Encoders {
   private def encodeArray(
       key: Option[String],
       values: Vector[JsonValue],
-      writer: LineWriter,
+      writer: EncodeLineWriter,
       depth: Int,
       options: EncodeOptions
   ): Unit = {
@@ -158,7 +169,7 @@ object Encoders {
 
   private def encodeListItem(
       value: JsonValue,
-      writer: LineWriter,
+      writer: EncodeLineWriter,
       depth: Int,
       options: EncodeOptions
   ): Unit = value match {

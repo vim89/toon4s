@@ -18,9 +18,12 @@ object Main {
       output: Option[Path] = None,
       indent: Int = 2,
       strict: Boolean = true,
+      strictness: String = "strict",
       delimiter: Delimiter = Delimiter.Comma,
       lengthMarker: Boolean = false,
-      stats: Boolean = false
+      stats: Boolean = false,
+      optimize: Boolean = false,
+      tokenizer: String = "cl100k"
   )
 
   def main(args: Array[String]): Unit = {
@@ -44,61 +47,95 @@ object Main {
   }
 
   private def runEncode(config: Config): Either[String, Unit] = {
-    val jsonInput  = Files.readString(config.input, StandardCharsets.UTF_8)
-    val scalaValue = SimpleJson.toScala(SimpleJson.parse(jsonInput))
-    val options    = EncodeOptions(
-      indent = config.indent,
-      delimiter = config.delimiter,
-      lengthMarker = config.lengthMarker
-    )
-    Toon.encode(scalaValue, options).left.map(_.message).flatMap {
-      encoded =>
+    for {
+      jsonInput  <- scala.util
+                      .Try(Files.readString(config.input, StandardCharsets.UTF_8))
+                      .toEither
+                      .left
+                      .map(
+                        t => s"Failed to read input: ${t.getMessage}"
+                      )
+      scalaValue <- scala.util
+                      .Try(SimpleJson.toScala(SimpleJson.parse(jsonInput)))
+                      .toEither
+                      .left
+                      .map(
+                        t => s"Invalid JSON input: ${t.getMessage}"
+                      )
+      base        = EncodeOptions(
+                      indent = config.indent,
+                      delimiter = config.delimiter,
+                      lengthMarker = config.lengthMarker
+                    )
+      opt        <- if (config.optimize) optimize(scalaValue, base, config.tokenizer) else Right(base)
+      encoded    <- Toon.encode(scalaValue, opt).left.map(_.message)
+      _          <- {
         if (config.stats) {
-          val in  = token.TokenEstimator.estimateTokens(jsonInput)
-          val out = token.TokenEstimator.estimateTokens(encoded)
-          System.err.println(s"[stats] input tokens: $in, output tokens: $out, delta: ${out - in}")
+          val name = token.TokenEstimator.canonicalName(config.tokenizer)
+          val in   = token.TokenEstimator.estimateTokens(jsonInput, config.tokenizer)
+          val out  = token.TokenEstimator.estimateTokens(encoded, config.tokenizer)
+          val pct  = if (in > 0) Math.round((1.0 - out.toDouble / in) * 100).toInt else 0
+          System.err.println(
+            s"[stats] tokenizer=$name input=$in output=$out delta=${out - in} savings=${pct}%"
+          )
         }
         writeOutput(encoded, config.output)
-    }
+      }
+    } yield ()
   }
 
   private def runDecode(config: Config): Either[String, Unit] = {
-    val toonInput = Files.readString(config.input, StandardCharsets.UTF_8)
-    val options   = DecodeOptions(indent = config.indent, strict = config.strict)
-    Toon
-      .decode(toonInput, options)
-      .left
-      .map(_.message)
-      .flatMap {
-        json =>
-          val rendered = SimpleJson.stringify(json)
-          if (config.stats) {
-            val in  = token.TokenEstimator.estimateTokens(toonInput)
-            val out = token.TokenEstimator.estimateTokens(rendered)
-            System.err.println(
-              s"[stats] input tokens: $in, output tokens: $out, delta: ${out - in}"
-            )
-          }
-          writeOutput(rendered, config.output)
+    val options = DecodeOptions(
+      indent = config.indent,
+      strict = config.strict,
+      strictness = asStrictness(config.strictness)
+    )
+    for {
+      toonInput <- scala.util
+                     .Try(Files.readString(config.input, StandardCharsets.UTF_8))
+                     .toEither
+                     .left
+                     .map(
+                       t => s"Failed to read input: ${t.getMessage}"
+                     )
+      json      <- Toon.decode(toonInput, options).left.map(_.message)
+      rendered   = SimpleJson.stringify(json)
+      _         <- {
+        if (config.stats) {
+          val name = token.TokenEstimator.canonicalName(config.tokenizer)
+          val in   = token.TokenEstimator.estimateTokens(toonInput, config.tokenizer)
+          val out  = token.TokenEstimator.estimateTokens(rendered, config.tokenizer)
+          val pct  = if (in > 0) Math.round((1.0 - out.toDouble / in) * 100).toInt else 0
+          System.err.println(
+            s"[stats] tokenizer=$name input=$in output=$out delta=${out - in} savings=${pct}%"
+          )
+        }
+        writeOutput(rendered, config.output)
       }
+    } yield ()
   }
 
   private def writeOutput(content: String, output: Option[Path]): Either[String, Unit] =
-    try {
-      output match {
-        case Some(path) =>
-          Option(path.getParent).foreach(
-            p => Files.createDirectories(p)
-          )
-          Files.write(path, content.getBytes(StandardCharsets.UTF_8))
-        case None       =>
-          println(content)
+    scala.util
+      .Try {
+        output match {
+          case Some(path) =>
+            Option(path.getParent).foreach(
+              p => Files.createDirectories(p)
+            )
+            Files.write(path, content.getBytes(StandardCharsets.UTF_8))
+          case None       =>
+            println(content)
+        }
       }
-      Right(())
-    } catch {
-      case ex: Throwable =>
-        Left(s"Failed to write output: ${ex.getMessage}")
-    }
+      .toEither
+      .left
+      .map(
+        ex => s"Failed to write output: ${ex.getMessage}"
+      )
+      .map(
+        _ => ()
+      )
 
   private val parser = {
     import scopt.OParser
@@ -137,6 +174,17 @@ object Main {
           (flag, c) => c.copy(strict = flag)
         )
         .text("Strict decoding (default: true)."),
+      opt[String]("strictness")
+        .valueName("strict|lenient|audit")
+        .validate(
+          v =>
+            if (Set("strict", "lenient", "audit").contains(v)) success
+            else failure("strictness must be strict|lenient|audit")
+        )
+        .action(
+          (v, c) => c.copy(strictness = v)
+        )
+        .text("Strictness profile (default: strict)."),
       opt[String]("delimiter")
         .valueName("comma|tab|pipe")
         .validate(
@@ -161,11 +209,22 @@ object Main {
           (_, c) => c.copy(lengthMarker = true)
         )
         .text("Emit #length markers for encoded arrays."),
+      opt[Unit]("optimize")
+        .action(
+          (_, c) => c.copy(stats = true)
+        )
+        .text("Optimize delimiter and markers for token savings (enables --stats)."),
       opt[Unit]("stats")
         .action(
           (_, c) => c.copy(stats = true)
         )
         .text("Print GPT token counts for input/output to stderr."),
+      opt[String]("tokenizer")
+        .valueName("cl100k|o200k|p50k|r50k")
+        .action(
+          (name, c) => c.copy(tokenizer = name)
+        )
+        .text("Tokenizer to use with --stats (default: cl100k)."),
       arg[String]("<input>")
         .required()
         .action(
@@ -182,4 +241,35 @@ object Main {
       case "pipe" | "|"  => Some(Delimiter.Pipe)
       case _             => None
     }
+
+  private def asStrictness(s: String): Strictness = s.toLowerCase match {
+    case "strict"  => Strictness.Strict
+    case "lenient" => Strictness.Lenient
+    case "audit"   => Strictness.Audit
+    case _         => Strictness.Strict
+  }
+
+  private def optimize(
+      scalaValue: Any,
+      base: EncodeOptions,
+      tokenizer: String
+  ): Either[String, EncodeOptions] = {
+    val candidates = List(
+      base.copy(delimiter = Delimiter.Comma, lengthMarker = false),
+      base.copy(delimiter = Delimiter.Comma, lengthMarker = true),
+      base.copy(delimiter = Delimiter.Tab, lengthMarker = false),
+      base.copy(delimiter = Delimiter.Tab, lengthMarker = true),
+      base.copy(delimiter = Delimiter.Pipe, lengthMarker = false),
+      base.copy(delimiter = Delimiter.Pipe, lengthMarker = true)
+    )
+    val normalized = io.toonformat.toon4s.internal.Normalize.toJson(scalaValue)
+    val scored     = candidates.map {
+      opt =>
+        val str  = io.toonformat.toon4s.encode.Encoders.encode(normalized, opt)
+        val toks = token.TokenEstimator.estimateTokens(str, tokenizer)
+        (opt, toks)
+    }
+    val best       = scored.minBy(_._2)
+    Right(best._1)
+  }
 }

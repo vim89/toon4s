@@ -7,6 +7,8 @@ import io.toonformat.toon4s.{Constants => C}
 final case class ParsedLine(raw: String, depth: Int, indent: Int, content: String, lineNumber: Int)
 final case class BlankLine(lineNumber: Int, indent: Int, depth: Int)
 final case class ScanResult(lines: Vector[ParsedLine], blanks: Vector[BlankLine])
+final case class ScanWarnings(messages: Vector[String])
+final case class ScanOutcome(result: ScanResult, warnings: ScanWarnings)
 
 final class LineCursor(
     private val lines: Vector[ParsedLine],
@@ -38,6 +40,9 @@ final class LineCursor(
 }
 
 object Scanner {
+  import java.io.BufferedReader
+  import java.io.Reader
+
   def toParsedLines(src: String, indentSize: Int, strict: Boolean): ScanResult = {
     if (src.trim.isEmpty) ScanResult(Vector.empty, Vector.empty)
     else {
@@ -81,5 +86,93 @@ object Scanner {
 
       ScanResult(out.result(), blanks.result())
     }
+  }
+
+  def toParsedLines(reader: Reader, indentSize: Int, strict: Boolean): ScanResult = {
+    val br     = new BufferedReader(reader)
+    val out    = Vector.newBuilder[ParsedLine]
+    val blanks = Vector.newBuilder[BlankLine]
+    var lineNo = 0
+    var done   = false
+    while (!done) {
+      val raw = br.readLine()
+      if (raw == null) done = true
+      else {
+        lineNo += 1
+        var indent  = 0
+        while (indent < raw.length && raw.charAt(indent) == C.Space) indent += 1
+        val content = raw.substring(indent)
+        if (content.trim.isEmpty) {
+          val depth = indent / indentSize
+          blanks += BlankLine(lineNo, indent, depth)
+        } else {
+          val depth = indent / indentSize
+          if (strict) {
+            val ws = raw.takeWhile(
+              ch => ch == C.Space || ch == C.Tab
+            )
+            if (ws.contains(C.Tab))
+              throw DecodeError.Syntax(
+                s"Line $lineNo: Tabs are not allowed in indentation in strict mode"
+              )
+            if (indent > 0 && indent % indentSize != 0)
+              throw DecodeError.Syntax(
+                s"Line $lineNo: Indentation must be exact multiple of $indentSize, but found $indent spaces"
+              )
+          }
+          out += ParsedLine(raw, depth, indent, content, lineNo)
+        }
+      }
+    }
+    ScanResult(out.result(), blanks.result())
+  }
+
+  def toParsedLinesWithStrictness(
+      reader: Reader,
+      indentSize: Int,
+      strictness: Strictness
+  ): ScanOutcome = {
+    val br       = new BufferedReader(reader)
+    val out      = Vector.newBuilder[ParsedLine]
+    val blanks   = Vector.newBuilder[BlankLine]
+    val warns    = Vector.newBuilder[String]
+    var lineNo   = 0
+    var done     = false
+    val isStrict = strictness == Strictness.Strict
+    while (!done) {
+      val raw = br.readLine()
+      if (raw == null) done = true
+      else {
+        lineNo += 1
+        var indent  = 0
+        while (indent < raw.length && raw.charAt(indent) == C.Space) indent += 1
+        val content = raw.substring(indent)
+        if (content.trim.isEmpty) {
+          val depth = indent / indentSize
+          blanks += BlankLine(lineNo, indent, depth)
+        } else {
+          val depth = indent / indentSize
+          val ws    = raw.takeWhile(
+            ch => ch == C.Space || ch == C.Tab
+          )
+          if (ws.contains(C.Tab)) {
+            if (isStrict)
+              throw DecodeError.Syntax(
+                s"Line $lineNo: Tabs are not allowed in indentation in strict mode"
+              )
+            else warns += s"Line $lineNo: Tab indentation encountered"
+          }
+          if (indent > 0 && indent % indentSize != 0) {
+            if (isStrict)
+              throw DecodeError.Syntax(
+                s"Line $lineNo: Indentation must be exact multiple of $indentSize, but found $indent spaces"
+              )
+            else warns += s"Line $lineNo: Non-multiple indentation ($indent)"
+          }
+          out += ParsedLine(raw, depth, indent, content, lineNo)
+        }
+      }
+    }
+    ScanOutcome(ScanResult(out.result(), blanks.result()), ScanWarnings(warns.result()))
   }
 }

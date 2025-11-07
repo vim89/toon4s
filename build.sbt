@@ -46,7 +46,7 @@ val commonScalacOptions = Seq(
 // SONATYPE_USERNAME, SONATYPE_PASSWORD, SONATYPE_HOST (optional, defaults to s01.oss.sonatype.org)
 
 lazy val root = (project in file("."))
-  .aggregate(core, cli)
+  .aggregate(core, cli, benchmarks)
   .settings(
     name := "toon4s",
     publish / skip := true
@@ -75,4 +75,15 @@ lazy val cli = (project in file("cli"))
     Compile / packageDoc / publishArtifact := false,
     maintainer := "Vitthal Mirji <vitthalmirji@gmail.com>",
     publish / skip := true
+  )
+
+lazy val benchmarks = (project in file("benchmarks"))
+  .dependsOn(core, cli)
+  .settings(
+    name := "toon4s-benchmarks",
+    libraryDependencies ++= Seq(
+      "com.knuddels" % "jtokkit" % "1.1.0"
+    ),
+    publish / skip := true,
+    scalacOptions ++= commonScalacOptions
   )

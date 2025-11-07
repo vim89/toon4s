@@ -46,21 +46,42 @@ See also: [Encoding rules](./SCALA-TOON-SPECIFICATION.md#encoding-rules), [Stric
 
 ## Benchmarks at a glance
 
-> Full numbers live in [`toon-format/spec`](https://github.com/toon-format/spec#benchmarks). Here’s the snapshot we care about when pitching this inside JVM teams.
+Be honest: token savings depend on your data. From our runs and community reports:
+
+- Typical savings: **30–60% vs formatted JSON** when arrays are uniform and values are short strings/numbers.
+- Small example: `{ "tags": ["jazz","chill","lofi"] }` → `tags[3]: jazz,chill,lofi` saved ~40–60% tokens across common GPT tokenizers.
+- Deeply nested, irregular objects: savings narrow; sometimes JSON ties or wins. Measure in CI with `--stats`.
+- Retrieval accuracy: some reports show JSON ≈ 70% vs TOON ≈ 65% on certain tasks. If accuracy matters more than cost, validate on your prompts.
+
+Use the CLI or the benchmark runner to measure your payloads:
 
 ```
-Token counts vs formatted JSON (o200k_base tokenizer)
+# Option A: CLI (quick)
+toon4s-cli --encode payload.json --stats --tokenizer o200k -o payload.toon
 
-GitHub repos sample        ██████████████░░░░░░░░░░░    8,745 (TOON)
-                           vs JSON:   15,145   💸 -42%
-                           vs YAML:   13,129   💸 -33%
-                           vs XML:    17,095   💸 -49%
-
-Daily analytics feed       ██████████░░░░░░░░░░░░░░░    4,507 (TOON)
-                           vs JSON:    9,234   💸 -51%
+# Option B: Bench runner (reproducible set)
+sbt benchmarks/run
 ```
 
-Savings depend on shape (uniform arrays shine, ragged JSON less so) but the takeaway is consistent: **TOON keeps JSON fidelity while cutting repeated keys and punctuation.**
+Current sample results (o200k/cl100k on our synthetic fixtures):
+
+```
+tags-small        | CL100K_BASE | json=18  | toon=10  | savings=44%
+uniform-objects   | CL100K_BASE | json=73  | toon=32  | savings=56%
+nested-irregular  | CL100K_BASE | json=167 | toon=122 | savings=27%
+```
+
+### Where we stand vs JToon / toon
+
+- Token savings: the same (format-driven). Implementation language doesn’t change token math.
+- Accuracy: also format-driven; expect parity with other conformant implementations.
+- Scala advantages (when you’re on Scala): sealed ADTs, exhaustive matching, FP‑friendly APIs, zero‑dep core, deterministic ordering.
+- CLI ergonomics: tokenizer‑aware `--stats` (with `--tokenizer`) to validate savings in CI.
+- If you’re writing Java, prefer JToon; if TypeScript, prefer toon. If you’re on Scala, toon4s is the most ergonomic choice.
+
+![Comparison: toon vs JToon vs toon4s](./docs/images/toon4s-compare.svg)
+
+Savings are model/tokenizer-sensitive; treat ranges as guidance, not guarantees.
 
 See also: [Token benchmarks](./SCALA-TOON-SPECIFICATION.md#token-benchmarks)
 
@@ -73,12 +94,14 @@ See also: [Token benchmarks](./SCALA-TOON-SPECIFICATION.md#token-benchmarks)
 libraryDependencies += "io.toonformat" %% "toon4s-core" % "0.1.0"
 ```
 
-Prefer CLI only? Ship the staged script:
+Prefer CLI only? Ship the staged script (diagram below):
 
 ```bash
 sbt cli/stage                            # builds ./cli/target/universal/stage/bin/toon4s-cli
 ./cli/target/universal/stage/bin/toon4s-cli --encode sample.json -o sample.toon
 ```
+
+![toon4s Scala USP](./docs/images/toon4s-usp.svg)
 
 ---
 
@@ -130,10 +153,12 @@ Available flags:
 | `--indent <n>` | Pretty-print indentation (default `2`). |
 | `--delimiter <comma\|tab\|pipe>` | Column delimiter for tabular arrays. |
 | `--length-marker` | Emit `[#N]` markers to disambiguate lengths in prompts. |
+| `--stats` | Print input/output token counts and savings to stderr. |
+| `--tokenizer <cl100k\|o200k\|p50k\|r50k>` | Select tokenizer for `--stats` (default `cl100k`). |
 | `--strict <bool>` | Enforce indentation/escape rules when decoding. |
 | `-o, --output <file>` | Target file (stdout when omitted). |
 
-Note: token estimates are available via `TokenEstimator` in the codebase; the CLI will expose a flag in a future release.
+Use `--stats` to measure token impact. Choose a tokenizer with `--tokenizer` (e.g., `o200k`).
 
 ---
 

@@ -279,6 +279,8 @@ flowchart LR
 - `--length-marker`
 - `--strict true|false`
 - `--output <file>` (stdout fallback)
+- `--stats` (print token counts and savings)
+- `--tokenizer cl100k|o200k|p50k|r50k` (for `--stats`, default `cl100k`)
 
 It uses the same `SimpleJson` helper for JSON round-trips, ensuring CLI ↔ library parity. `TokenEstimator` (jtokkit, CL100K base) will surface in future releases to log token counts after each conversion.
 

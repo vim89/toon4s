@@ -28,4 +28,3 @@ object DecodeOptionsBuilder {
   def empty: DecodeOptionsBuilder[DMissing] =
     new DecodeOptionsBuilder(None, strictFlag = true, strictness = Strictness.Strict)
 }
-

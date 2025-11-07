@@ -95,7 +95,9 @@ class DecodeSpec extends FunSuite {
   }
 
   test("unicode escapes are rejected (TOON v1.4 spec compliance)") {
-    val input = """name: "test\u0041value""""
+    // Avoid a literal \uXXXX sequence in source to prevent the Scala 2.13
+    // unicode preprocessor from interpreting it at compile time.
+    val input = "name: \"test\\u004" + "1value\""
 
     val result = Toon.decode(input)
     assert(result.isLeft, "Unicode escape \\u0041 should be rejected")

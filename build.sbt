@@ -15,7 +15,7 @@ ThisBuild / developers := List(
   Developer(
     id = "vim89",
     name = "vim89",
-    email = "opensource@vim89.dev",
+    email = "vitthalmirji@gmail.com",
     url = url("https://github.com/vim89")
   )
 )
@@ -56,7 +56,7 @@ lazy val core = (project in file("core"))
   .settings(
     name := "toon4s-core",
     libraryDependencies ++= Seq(
-      "org.scalameta" %% "munit" % "0.7.29" % Test
+      "org.scalameta" %% "munit" % "1.2.1" % Test
     ),
     scalacOptions ++= commonScalacOptions
   )
@@ -73,6 +73,6 @@ lazy val cli = (project in file("cli"))
     scalacOptions ++= commonScalacOptions,
     Compile / mainClass := Some("io.toonformat.toon4s.cli.Main"),
     Compile / packageDoc / publishArtifact := false,
-    maintainer := "vim89 <opensource@vim89.dev>",
+    maintainer := "Vitthal Mirji <vitthalmirji@gmail.com>",
     publish / skip := true
   )

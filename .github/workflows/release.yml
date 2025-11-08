@@ -56,7 +56,6 @@ jobs:
         run: ./smoke-tests/run-smoke.sh
 
       - name: Import GPG key
-        if: ${{ secrets.PGP_SECRET != '' }}
         env:
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
         run: |

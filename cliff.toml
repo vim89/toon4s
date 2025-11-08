@@ -23,12 +23,12 @@ split_commits = false
 commit_preprocessors = []
 commit_parsers = [
     { message = "^feat",   group = "Features" },
-    { message = "^fix",    group = "Bug Fixes" },
+    { message = "^fix",    group = "Bug fixes" },
     { message = "^docs",   group = "Documentation" },
     { message = "^refactor", group = "Refactoring" },
     { message = "^perf",   group = "Performance" },
     { message = "^test",   group = "Tests" },
-    { message = "^build",  group = "Build System" },
+    { message = "^build",  group = "Build fystem" },
     { message = "^ci",     group = "Continuous Integration" },
     { message = "^chore",  group = "Chores" },
     { message = "^revert", group = "Reverts" },

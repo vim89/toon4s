@@ -7,6 +7,8 @@
 
 - update CHANGELOG.md [skip ci]
 
+- update CHANGELOG.md [skip ci]
+
 
 
 ### Chroe

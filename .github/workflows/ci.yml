@@ -170,19 +170,6 @@ jobs:
             exit 1
           fi
 
-  all-checks-pass:
-    name: All Checks Pass
-    if: always()
-    runs-on: ubuntu-latest
-    needs: [test, smoke, jmh]
-    steps:
-      - name: Verify upstream jobs
-        run: |
-          if [[ "${{ needs.test.result }}" != "success" || "${{ needs.smoke.result }}" != "success" || "${{ needs.jmh.result }}" != "success" ]]; then
-            echo "One or more jobs failed."
-            exit 1
-          fi
-          echo "All checks passed."
 
   jmh:
     name: JMH Performance
@@ -241,3 +228,18 @@ jobs:
               issue_number: context.issue.number,
               body
             });
+
+
+  all-checks-pass:
+    name: All checks pass
+    if: always()
+    runs-on: ubuntu-latest
+    needs: [quick-checks, test, smoke, budget, jmh]
+    steps:
+      - name: Verify upstream jobs
+        run: |
+          if [[ "${{ needs.test.result }}" != "success" || "${{ needs.smoke.result }}" != "success" || "${{ needs.jmh.result }}" != "success" ]]; then
+            echo "One or more jobs failed."
+            exit 1
+          fi
+          echo "All checks passed."

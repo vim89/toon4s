@@ -1,17 +1,20 @@
 package io.toonformat.toon4s
 package decode
 
-import io.toonformat.toon4s.error.{DecodeError, ErrorLocation}
 import io.toonformat.toon4s.{Constants => C}
+import io.toonformat.toon4s.error.{DecodeError, ErrorLocation}
 
 final case class ParsedLine(raw: String, depth: Int, indent: Int, content: String, lineNumber: Int)
+
 final case class BlankLine(lineNumber: Int, indent: Int, depth: Int)
+
 final case class ScanResult(lines: Vector[ParsedLine], blanks: Vector[BlankLine])
 
 final class LineCursor(
     private val lines: Vector[ParsedLine],
-    private val blanks: Vector[BlankLine]
+    private val blanks: Vector[BlankLine],
 ) {
+
   private var idx = 0
 
   def peek: Option[ParsedLine] = lines.lift(idx)
@@ -35,9 +38,11 @@ final class LineCursor(
   def getBlankLines: Vector[BlankLine] = blanks
 
   def advance(): Unit = idx += 1
+
 }
 
 object Scanner {
+
   import java.io.BufferedReader
   import java.io.Reader
 
@@ -45,14 +50,14 @@ object Scanner {
     if (src.trim.isEmpty) ScanResult(Vector.empty, Vector.empty)
     else {
       val rawLines = src.split("\n", -1).toVector
-      var i        = 0
-      val out      = Vector.newBuilder[ParsedLine]
-      val blanks   = Vector.newBuilder[BlankLine]
+      var i = 0
+      val out = Vector.newBuilder[ParsedLine]
+      val blanks = Vector.newBuilder[BlankLine]
 
       while (i < rawLines.length) {
-        val raw     = rawLines(i)
-        val lineNo  = i + 1
-        var indent  = 0
+        val raw = rawLines(i)
+        val lineNo = i + 1
+        var indent = 0
         while (indent < raw.length && raw.charAt(indent) == C.Space) {
           indent += 1
         }
@@ -63,19 +68,17 @@ object Scanner {
         } else {
           val depth = indent / indentSize
           if (strict) {
-            val ws = raw.takeWhile(
-              ch => ch == C.Space || ch == C.Tab
-            )
+            val ws = raw.takeWhile(ch => ch == C.Space || ch == C.Tab)
             if (ws.contains(C.Tab)) {
               throw DecodeError.Syntax(
                 "Tabs are not allowed in indentation in strict mode",
-                Some(ErrorLocation(lineNo, indent + 1, raw))
+                Some(ErrorLocation(lineNo, indent + 1, raw)),
               )
             }
             if (indent > 0 && indent % indentSize != 0) {
               throw DecodeError.Syntax(
                 s"Indentation must be exact multiple of $indentSize, but found $indent spaces",
-                Some(ErrorLocation(lineNo, indent + 1, raw))
+                Some(ErrorLocation(lineNo, indent + 1, raw)),
               )
             }
           }
@@ -89,17 +92,17 @@ object Scanner {
   }
 
   def toParsedLines(reader: Reader, indentSize: Int, strict: Boolean): ScanResult = {
-    val br     = new BufferedReader(reader)
-    val out    = Vector.newBuilder[ParsedLine]
+    val br = new BufferedReader(reader)
+    val out = Vector.newBuilder[ParsedLine]
     val blanks = Vector.newBuilder[BlankLine]
     var lineNo = 0
-    var done   = false
+    var done = false
     while (!done) {
       val raw = br.readLine()
       if (raw == null) done = true
       else {
         lineNo += 1
-        var indent  = 0
+        var indent = 0
         while (indent < raw.length && raw.charAt(indent) == C.Space) indent += 1
         val content = raw.substring(indent)
         if (content.trim.isEmpty) {
@@ -108,18 +111,16 @@ object Scanner {
         } else {
           val depth = indent / indentSize
           if (strict) {
-            val ws = raw.takeWhile(
-              ch => ch == C.Space || ch == C.Tab
-            )
+            val ws = raw.takeWhile(ch => ch == C.Space || ch == C.Tab)
             if (ws.contains(C.Tab))
               throw DecodeError.Syntax(
                 "Tabs are not allowed in indentation in strict mode",
-                Some(ErrorLocation(lineNo, indent + 1, raw))
+                Some(ErrorLocation(lineNo, indent + 1, raw)),
               )
             if (indent > 0 && indent % indentSize != 0)
               throw DecodeError.Syntax(
                 s"Indentation must be exact multiple of $indentSize, but found $indent spaces",
-                Some(ErrorLocation(lineNo, indent + 1, raw))
+                Some(ErrorLocation(lineNo, indent + 1, raw)),
               )
           }
           out += ParsedLine(raw, depth, indent, content, lineNo)
@@ -128,4 +129,5 @@ object Scanner {
     }
     ScanResult(out.result(), blanks.result())
   }
+
 }

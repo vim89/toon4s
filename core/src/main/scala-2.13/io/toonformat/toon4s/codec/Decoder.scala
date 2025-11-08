@@ -1,15 +1,19 @@
 package io.toonformat.toon4s.codec
 
+import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, OffsetDateTime, ZonedDateTime}
+
 import io.toonformat.toon4s.JsonValue
 import io.toonformat.toon4s.JsonValue._
 import io.toonformat.toon4s.error.DecodeError
-import java.time.{Instant, LocalDate, LocalDateTime, OffsetDateTime, ZonedDateTime, LocalTime}
 
 trait Decoder[A] {
+
   def apply(v: JsonValue): Either[DecodeError, A]
+
 }
 
 object Decoder {
+
   def apply[A](implicit d: Decoder[A]): Decoder[A] = d
 
   // Primitives
@@ -55,7 +59,7 @@ object Decoder {
         case (Right(acc), j)  => d(j).map(_ :: acc)
         case (l @ Left(_), _) => l
       }.map(_.reverse)
-    case other      => Left(DecodeError.Mapping(s"Expected array, found $other"))
+    case other => Left(DecodeError.Mapping(s"Expected array, found $other"))
   }
 
   implicit def vectorDecoder[A](implicit d: Decoder[A]): Decoder[Vector[A]] = {
@@ -64,19 +68,17 @@ object Decoder {
         case (Right(acc), j)  => d(j).map(acc :+ _)
         case (l @ Left(_), _) => l
       }
-    case other      => Left(DecodeError.Mapping(s"Expected array, found $other"))
+    case other => Left(DecodeError.Mapping(s"Expected array, found $other"))
   }
 
   implicit def mapDecoder[A](implicit d: Decoder[A]): Decoder[Map[String, A]] = {
     case JObj(fields) =>
       fields.foldLeft[Either[DecodeError, Map[String, A]]](Right(Map.empty)) {
         case (Right(acc), (k, j)) =>
-          d(j).map(
-            a => acc + (k -> a)
-          )
-        case (l @ Left(_), _)     => l
+          d(j).map(a => acc + (k -> a))
+        case (l @ Left(_), _) => l
       }
-    case other        => Left(DecodeError.Mapping(s"Expected object, found $other"))
+    case other => Left(DecodeError.Mapping(s"Expected object, found $other"))
   }
 
   // java.time instances (strict ISO-8601 parsing)
@@ -86,7 +88,7 @@ object Decoder {
       catch {
         case _: Throwable => Left(DecodeError.Mapping(s"Instant expected (ISO-8601), found: $s"))
       }
-    case other      => Left(DecodeError.Mapping(s"Expected string for Instant, found $other"))
+    case other => Left(DecodeError.Mapping(s"Expected string for Instant, found $other"))
   }
 
   implicit val localDateDecoder: Decoder[LocalDate] = {
@@ -96,14 +98,14 @@ object Decoder {
         case _: Throwable =>
           Left(DecodeError.Mapping(s"LocalDate expected (YYYY-MM-DD), found: $s"))
       }
-    case other      => Left(DecodeError.Mapping(s"Expected string for LocalDate, found $other"))
+    case other => Left(DecodeError.Mapping(s"Expected string for LocalDate, found $other"))
   }
 
   implicit val localDateTimeDecoder: Decoder[LocalDateTime] = {
     case JString(s) =>
       try Right(LocalDateTime.parse(s))
       catch { case _: Throwable => Left(DecodeError.Mapping(s"LocalDateTime expected, found: $s")) }
-    case other      => Left(DecodeError.Mapping(s"Expected string for LocalDateTime, found $other"))
+    case other => Left(DecodeError.Mapping(s"Expected string for LocalDateTime, found $other"))
   }
 
   implicit val offsetDateTimeDecoder: Decoder[OffsetDateTime] = {
@@ -112,14 +114,14 @@ object Decoder {
       catch {
         case _: Throwable => Left(DecodeError.Mapping(s"OffsetDateTime expected, found: $s"))
       }
-    case other      => Left(DecodeError.Mapping(s"Expected string for OffsetDateTime, found $other"))
+    case other => Left(DecodeError.Mapping(s"Expected string for OffsetDateTime, found $other"))
   }
 
   implicit val zonedDateTimeDecoder: Decoder[ZonedDateTime] = {
     case JString(s) =>
       try Right(ZonedDateTime.parse(s))
       catch { case _: Throwable => Left(DecodeError.Mapping(s"ZonedDateTime expected, found: $s")) }
-    case other      => Left(DecodeError.Mapping(s"Expected string for ZonedDateTime, found $other"))
+    case other => Left(DecodeError.Mapping(s"Expected string for ZonedDateTime, found $other"))
   }
 
   implicit val localTimeDecoder: Decoder[LocalTime] = {
@@ -129,6 +131,7 @@ object Decoder {
         case _: Throwable =>
           Left(DecodeError.Mapping(s"LocalTime expected (hh:mm[:ss[.SSS]]), found: $s"))
       }
-    case other      => Left(DecodeError.Mapping(s"Expected string for LocalTime, found $other"))
+    case other => Left(DecodeError.Mapping(s"Expected string for LocalTime, found $other"))
   }
+
 }

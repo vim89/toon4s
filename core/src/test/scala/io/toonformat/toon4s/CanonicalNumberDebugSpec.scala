@@ -1,8 +1,9 @@
 package io.toonformat.toon4s
 
+import scala.collection.immutable.VectorMap
+
 import io.toonformat.toon4s.JsonValue._
 import munit.FunSuite
-import scala.collection.immutable.VectorMap
 
 class CanonicalNumberDebugSpec extends FunSuite {
 
@@ -11,16 +12,17 @@ class CanonicalNumberDebugSpec extends FunSuite {
       ("exponent", BigDecimal("1e6")),
       ("trailing zeros", BigDecimal("1.5000")),
       ("negative zero", BigDecimal("-0")),
-      ("plain", BigDecimal("42"))
+      ("plain", BigDecimal("42")),
     )
 
     testCases.foreach {
       case (label, input) =>
-        val json    = JObj(VectorMap("value" -> JNumber(input)))
+        val json = JObj(VectorMap("value" -> JNumber(input)))
         val encoded = Toon.encode(json).getOrElse("")
         println(s"\n=== $label: $input ===")
         println(encoded)
         println("===")
     }
   }
+
 }

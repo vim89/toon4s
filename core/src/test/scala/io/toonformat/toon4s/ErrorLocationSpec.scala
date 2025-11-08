@@ -3,10 +3,11 @@ package io.toonformat.toon4s
 import io.toonformat.toon4s.error.DecodeError
 import munit.FunSuite
 
-/** Tests for error location reporting (P2.5).
-  *
-  * Verifies that errors include line/column information and contextual snippets.
-  */
+/**
+ * Tests for error location reporting (P2.5).
+ *
+ * Verifies that errors include line/column information and contextual snippets.
+ */
 class ErrorLocationSpec extends FunSuite {
 
   test("tab in indentation error shows line and column") {
@@ -91,4 +92,5 @@ key: value
     assertEquals(msg, "Missing colon after key")
     assert(!msg.contains(":"), "Message should not contain location markers")
   }
+
 }

@@ -2,36 +2,38 @@ package io.toonformat.toon4s
 
 // Phantom markers
 sealed trait Missing
+
 sealed trait Present
 
 final class EncodeOptionsBuilder[HasIndent, HasDelimiter] private (
     private val indentOpt: Option[Int],
     private val delimiterOpt: Option[Delimiter],
-    private val lengthMarker: Boolean
+    private val lengthMarker: Boolean,
 ) {
 
-  /** Set indent size with runtime validation.
-    *
-    * ==Runtime Validation Pattern==
-    * While phantom types provide compile-time validation of required fields, runtime validation
-    * ensures values are within acceptable ranges.
-    *
-    * @param n
-    *   Number of spaces per indentation level
-    * @return
-    *   Builder with indent set
-    * @throws IllegalArgumentException
-    *   if indent is not positive
-    *
-    * @example
-    *   {{{
-    * EncodeOptionsBuilder.empty.indent(2).delimiter(Delimiter.Comma).build
-    * // Ok
-    *
-    * EncodeOptionsBuilder.empty.indent(0).delimiter(Delimiter.Comma).build
-    * // Throws: IllegalArgumentException("Indent must be positive, got: 0")
-    *   }}}
-    */
+  /**
+   * Set indent size with runtime validation.
+   *
+   * ==Runtime Validation Pattern==
+   * While phantom types provide compile-time validation of required fields, runtime validation
+   * ensures values are within acceptable ranges.
+   *
+   * @param n
+   *   Number of spaces per indentation level
+   * @return
+   *   Builder with indent set
+   * @throws IllegalArgumentException
+   *   if indent is not positive
+   *
+   * @example
+   *   {{{
+   * EncodeOptionsBuilder.empty.indent(2).delimiter(Delimiter.Comma).build
+   * // Ok
+   *
+   * EncodeOptionsBuilder.empty.indent(0).delimiter(Delimiter.Comma).build
+   * // Throws: IllegalArgumentException("Indent must be positive, got: 0")
+   *   }}}
+   */
   def indent(n: Int): EncodeOptionsBuilder[Present, HasDelimiter] = {
     require(n > 0, s"Indent must be positive, got: $n")
     require(n <= 32, s"Indent must be <= 32 for readability, got: $n")
@@ -46,14 +48,18 @@ final class EncodeOptionsBuilder[HasIndent, HasDelimiter] private (
 
   def build(implicit ev1: HasIndent =:= Present, ev2: HasDelimiter =:= Present): EncodeOptions =
     EncodeOptions(indent = indentOpt.get, delimiter = delimiterOpt.get, lengthMarker = lengthMarker)
+
 }
 
 object EncodeOptionsBuilder {
-  type IndentSet    = Present
+
+  type IndentSet = Present
+
   type DelimiterSet = Present
 
   def empty: EncodeOptionsBuilder[Missing, Missing] =
     new EncodeOptionsBuilder(None, None, lengthMarker = false)
 
   def defaults: EncodeOptions = EncodeOptions()
+
 }

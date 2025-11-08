@@ -6,8 +6,8 @@
 
 ## Why TOON for Scala teams?
 
-- **Token savings** mean cheaper LLM calls. TOON payloads routinely cut 30–60% of tokens versus pretty JSON.
-- **Scala-first APIs** let you pass case classes, immutable maps, Options, and `java.time` values directly—no JSON intermediary required.
+- **Token savings** mean cheaper LLM calls. TOON payloads routinely cut 30-60% of tokens versus pretty JSON.
+- **Scala-first APIs** let you pass case classes, immutable maps, Options, and `java.time` values directly-no JSON intermediary required.
 - **Deterministic behavior** (sealed ADTs, pure functions, explicit errors) makes TOON fit functional stacks (Cats, ZIO) and strict JVM services.
 - **Guardrails** (length markers, tabular headers, strict indentation) improve LLM reliability when you force models to echo structured responses.
 
@@ -62,8 +62,8 @@ Savings vary with schema complexity, but any payload where you repeat columns ac
 
 Preferred (Scala 3): `ToonTyped.encode[A: Encoder](value, options)` and `ToonTyped.decodeAs[A: Decoder](string, options)` provide typed entry points. Under the hood, the encoding path performs two steps:
 
-1. **Normalization** – Convert arbitrary Scala values to the `JsonValue` ADT (`Normalize.toJson`).
-2. **Rendering** – Convert the `JsonValue` tree to TOON text using `Encoders.encode`.
+1. **Normalization** - Convert arbitrary Scala values to the `JsonValue` ADT (`Normalize.toJson`).
+2. **Rendering** - Convert the `JsonValue` tree to TOON text using `Encoders.encode`.
 
 ```mermaid
 flowchart LR
@@ -200,10 +200,10 @@ Inline vs block selection:
 
 `Toon.decode(string, DecodeOptions)` parses the input to `JsonValue` or returns `DecodeError`:
 
-- `Syntax` – malformed indentation, unterminated strings, unknown escape sequences, missing colon, etc.
-- `Range` – row count mismatch, extra tabular rows, list item overflows.
-- `InvalidHeader` – bracket/brace segments misdeclared.
-- `Unexpected` – catch-all for parser bugs.
+- `Syntax` - malformed indentation, unterminated strings, unknown escape sequences, missing colon, etc.
+- `Range` - row count mismatch, extra tabular rows, list item overflows.
+- `InvalidHeader` - bracket/brace segments misdeclared.
+- `Unexpected` - catch-all for parser bugs.
 
 Decoder algorithm highlights:
 
@@ -399,7 +399,7 @@ Use larger windows (e.g., `-i 5 -wi 5`) on a stable machine for trustworthy numb
 
 ## See also
 
-- [Main README](./README.md) – installation, usage, CLI examples.
-- [toon-format/spec](https://github.com/toon-format/spec) – canonical format specification & fixtures.
-- [JToon](https://github.com/felipestanzani/jtoon) – JVM reference in Kotlin/Java.
+- [Main README](./README.md) - installation, usage, CLI examples.
+- [toon-format/spec](https://github.com/toon-format/spec) - canonical format specification & fixtures.
+- [JToon](https://github.com/felipestanzani/jtoon) - JVM reference in Kotlin/Java.
 - [Original TypeScript implementation](https://github.com/toon-format/toon).

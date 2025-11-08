@@ -1,16 +1,18 @@
 package io.toonformat.toon4s
 
+import scala.collection.immutable.VectorMap
+
 import io.toonformat.toon4s.JsonValue._
 import munit.ScalaCheckSuite
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop._
-import scala.collection.immutable.VectorMap
 
-/** Property-based tests for TOON encoding/decoding using ScalaCheck.
-  *
-  * Tests universal properties that should hold for all valid inputs, catching edge cases that
-  * example-based tests miss.
-  */
+/**
+ * Property-based tests for TOON encoding/decoding using ScalaCheck.
+ *
+ * Tests universal properties that should hold for all valid inputs, catching edge cases that
+ * example-based tests miss.
+ */
 class PropertyTests extends ScalaCheckSuite {
 
   // ===== Generators =====
@@ -20,10 +22,8 @@ class PropertyTests extends ScalaCheckSuite {
     Gen.oneOf(true, false).map(JBool.apply),
     Gen
       .choose(-1000000.0, 1000000.0)
-      .map(
-        d => JNumber(BigDecimal(d))
-      ),
-    Gen.alphaNumStr.map(JString.apply)
+      .map(d => JNumber(BigDecimal(d))),
+    Gen.alphaNumStr.map(JString.apply),
   )
 
   /** Generate small valid JsonValue instances (depth-limited to avoid stack overflow). */
@@ -33,7 +33,7 @@ class PropertyTests extends ScalaCheckSuite {
       Gen.frequency(
         5 -> genPrimitive,
         2 -> genArray(depth),
-        2 -> genObject(depth)
+        2 -> genObject(depth),
       )
   }
 
@@ -50,11 +50,9 @@ class PropertyTests extends ScalaCheckSuite {
       .listOfN(
         Gen.choose(1, maxSize).sample.getOrElse(3), // At least 1 field
         for {
-          key   <- Gen.alphaNumStr.suchThat(
-                     s => s.nonEmpty && s.length > 0
-                   )
+          key <- Gen.alphaNumStr.suchThat(s => s.nonEmpty && s.length > 0)
           value <- genJsonValue(depth - 1)
-        } yield (key, value)
+        } yield (key, value),
       )
       .suchThat(_.nonEmpty) // Ensure non-empty
       .map {
@@ -70,17 +68,16 @@ class PropertyTests extends ScalaCheckSuite {
     Gen.const("with,comma"),
     Gen.const("with:colon"),
     Gen.const("with\"quote"),
-    Gen.const("123"),  // looks like number
+    Gen.const("123"), // looks like number
     Gen.const("true"), // looks like boolean
-    Gen.const("null")  // looks like null
+    Gen.const("null"), // looks like null
   )
 
   // ===== Properties =====
 
   property("encode always succeeds for valid JsonValue") {
     forAll(genJsonValue(3)) {
-      json =>
-        Toon.encode(json).isRight
+      json => Toon.encode(json).isRight
     }
   }
 
@@ -89,17 +86,17 @@ class PropertyTests extends ScalaCheckSuite {
       json =>
         val encoded = Toon.encode(json)
         encoded match {
-          case Right(toon) =>
-            val decoded = Toon.decode(toon)
-            decoded match {
-              case Right(result) =>
-                // Re-encoding the decoded value should succeed
-                Toon.encode(result).isRight
-              case Left(err)     =>
-                fail(s"Decode failed: ${err.message}\nFor TOON:\n$toon")
-            }
-          case Left(err)   =>
-            fail(s"Encode failed: ${err.message}")
+        case Right(toon) =>
+          val decoded = Toon.decode(toon)
+          decoded match {
+          case Right(result) =>
+            // Re-encoding the decoded value should succeed
+            Toon.encode(result).isRight
+          case Left(err) =>
+            fail(s"Decode failed: ${err.message}\nFor TOON:\n$toon")
+          }
+        case Left(err) =>
+          fail(s"Encode failed: ${err.message}")
         }
     }
   }
@@ -107,50 +104,50 @@ class PropertyTests extends ScalaCheckSuite {
   property("numbers preserve precision") {
     forAll(Gen.choose(-1e10, 1e10).map(BigDecimal.apply)) {
       num =>
-        val json    = JObj(VectorMap("num" -> JNumber(num)))
+        val json = JObj(VectorMap("num" -> JNumber(num)))
         val encoded = Toon.encode(json)
         encoded match {
-          case Right(toon) =>
-            val decoded = Toon.decode(toon)
-            decoded match {
-              case Right(JObj(fields)) =>
-                // Navigate to find the number
-                fields.values.headOption match {
-                  case Some(inner) =>
-                    extractNumber(inner) match {
-                      case Some(result) => result.compare(num) == 0
-                      case None         => fail(s"Could not extract number from $inner")
-                    }
-                  case None        => fail("No fields in decoded object")
-                }
-              case Right(other)        =>
-                fail(s"Expected JObj, got $other")
-              case Left(err)           =>
-                fail(s"Decode failed: ${err.message}")
+        case Right(toon) =>
+          val decoded = Toon.decode(toon)
+          decoded match {
+          case Right(JObj(fields)) =>
+            // Navigate to find the number
+            fields.values.headOption match {
+            case Some(inner) =>
+              extractNumber(inner) match {
+              case Some(result) => result.compare(num) == 0
+              case None         => fail(s"Could not extract number from $inner")
+              }
+            case None => fail("No fields in decoded object")
             }
-          case Left(err)   =>
-            fail(s"Encode failed: ${err.message}")
+          case Right(other) =>
+            fail(s"Expected JObj, got $other")
+          case Left(err) =>
+            fail(s"Decode failed: ${err.message}")
+          }
+        case Left(err) =>
+          fail(s"Encode failed: ${err.message}")
         }
     }
   }
 
   private def extractNumber(json: JsonValue): Option[BigDecimal] = json match {
-    case JNumber(n)                       => Some(n)
-    case JObj(fields) if fields.size == 1 => fields.values.headOption.flatMap(extractNumber)
-    case _                                => None
+  case JNumber(n)                       => Some(n)
+  case JObj(fields) if fields.size == 1 => fields.values.headOption.flatMap(extractNumber)
+  case _                                => None
   }
 
   property("booleans roundtrip correctly") {
     forAll(Gen.oneOf(true, false)) {
       bool =>
-        val json    = JObj(VectorMap("flag" -> JBool(bool)))
+        val json = JObj(VectorMap("flag" -> JBool(bool)))
         val encoded = Toon.encode(json)
         encoded match {
-          case Right(toon) =>
-            val decoded = Toon.decode(toon)
-            decoded.isRight
-          case Left(err)   =>
-            fail(s"Encode failed: ${err.message}")
+        case Right(toon) =>
+          val decoded = Toon.decode(toon)
+          decoded.isRight
+        case Left(err) =>
+          fail(s"Encode failed: ${err.message}")
         }
     }
   }
@@ -158,13 +155,13 @@ class PropertyTests extends ScalaCheckSuite {
   property("non-empty strings roundtrip") {
     forAll(genStringContent) {
       s =>
-        val json    = JObj(VectorMap("text" -> JString(s)))
+        val json = JObj(VectorMap("text" -> JString(s)))
         val encoded = Toon.encode(json)
         encoded match {
-          case Right(toon) =>
-            Toon.decode(toon).isRight
-          case Left(err)   =>
-            fail(s"Encode failed: ${err.message}")
+        case Right(toon) =>
+          Toon.decode(toon).isRight
+        case Left(err) =>
+          fail(s"Encode failed: ${err.message}")
         }
     }
   }
@@ -172,19 +169,17 @@ class PropertyTests extends ScalaCheckSuite {
   property("arrays with uniform primitives encode successfully") {
     forAll(Gen.nonEmptyListOf(Gen.choose(1, 100)).suchThat(_.size <= 50)) {
       nums =>
-        val json    = JArray(
+        val json = JArray(
           nums
-            .map(
-              n => JNumber(BigDecimal(n))
-            )
+            .map(n => JNumber(BigDecimal(n)))
             .toVector
         )
         val encoded = Toon.encode(json)
         encoded match {
-          case Right(toon) =>
-            // Should decode successfully
-            Toon.decode(toon).isRight
-          case Left(_)     => false
+        case Right(toon) =>
+          // Should decode successfully
+          Toon.decode(toon).isRight
+        case Left(_) => false
         }
     }
   }
@@ -192,23 +187,19 @@ class PropertyTests extends ScalaCheckSuite {
   property("objects with simple fields encode successfully") {
     forAll(Gen.choose(1, 5)) {
       numKeys =>
-        val keys    = (1 to numKeys)
-          .map(
-            i => s"key$i"
-          )
+        val keys = (1 to numKeys)
+          .map(i => s"key$i")
           .toList
-        val json    = JObj(
+        val json = JObj(
           VectorMap.from(
-            keys.map(
-              k => k -> JString(k)
-            )
+            keys.map(k => k -> JString(k))
           )
         )
         val encoded = Toon.encode(json)
         encoded match {
-          case Right(toon) =>
-            Toon.decode(toon).isRight
-          case Left(_)     => false
+        case Right(toon) =>
+          Toon.decode(toon).isRight
+        case Left(_) => false
         }
     }
   }
@@ -219,21 +210,21 @@ class PropertyTests extends ScalaCheckSuite {
         val options = EncodeOptions(delimiter = delim)
         val encoded = Toon.encode(json, options)
         encoded match {
-          case Right(toon) =>
-            val decoded = Toon.decode(toon, DecodeOptions())
-            decoded.isRight
-          case Left(_)     => false
+        case Right(toon) =>
+          val decoded = Toon.decode(toon, DecodeOptions())
+          decoded.isRight
+        case Left(_) => false
         }
     }
   }
 
   property("lenient mode accepts more inputs than strict") {
     // Blank line in array - should fail in strict, succeed in lenient
-    val toon    = """arr[2]:
-                    |  - item1
-                    |
-                    |  - item2""".stripMargin
-    val strict  = Toon.decode(toon, DecodeOptions(strictness = Strictness.Strict))
+    val toon = """arr[2]:
+                 |  - item1
+                 |
+                 |  - item2""".stripMargin
+    val strict = Toon.decode(toon, DecodeOptions(strictness = Strictness.Strict))
     val lenient = Toon.decode(toon, DecodeOptions(strictness = Strictness.Lenient))
     strict.isLeft && lenient.isRight
   }
@@ -263,4 +254,5 @@ class PropertyTests extends ScalaCheckSuite {
     super.scalaCheckTestParameters
       .withMinSuccessfulTests(100) // 100 successful tests per property
       .withMaxDiscardRatio(20) // Allow more discards for filtered generators
+
 }

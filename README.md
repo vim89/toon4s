@@ -12,7 +12,7 @@ a compact, LLM-friendly data format that blends YAML-style indentation with CSV-
 
 **What makes `toon4s` different**: Most libraries prioritize features over architecture.
 
-- **Pure functional core**: Zero mutations, total functions, referentially transparent (60+ vars eliminated, 30+ while loops replaced with tail recursion)
+- **Pure functional core**: Zero mutations, total functions, referentially transparent
 - **Type safety first**: sealed ADTs, exhaustive pattern matching, zero unsafe casts, VectorMap for deterministic ordering
 - **Stack-safe by design**: @tailrec-verified functions, constant stack usage, handles arbitrarily deep structures
 - **Modern JVM ready**: Virtual thread compatible (no ThreadLocal), streaming optimized, zero dependencies (491KB core JAR)
@@ -281,7 +281,7 @@ sbt cli/stage                            # builds ./cli/target/universal/stage/b
 ./cli/target/universal/stage/bin/toon4s-cli --encode sample.json -o sample.toon
 ```
 
-![toon4s Scala USP](./docs/images/toon4s-usp.svg)
+<img src="docs/images/toon4s-usp.svg"  alt="USP"/>
 
 ---
 
@@ -547,16 +547,16 @@ See also: [Delimiters & markers](./SCALA-TOON-SPECIFICATION.md#delimiters--lengt
 
 **What we didn't compromise on**: toon4s prioritizes **correctness, type safety, and functional purity** over convenience. All limitations below are honest tradeoffs we made consciously—not shortcuts.
 
-### TOON Format Limitations (Not toon4s Implementation)
+### TOON format limitations (Not toon4s Implementation)
 
 These are inherent to the TOON specification, not toon4s:
 
 - **Irregular arrays**: When rows differ in shape, TOON falls back to YAML-like list syntax; token savings shrink. This is by design—tabular encoding requires uniform structure.
 - **Binary blobs**: TOON doesn't support binary data (spec limitation). Encode as Base64 strings manually before passing to toon4s.
 
-### toon4s Implementation Tradeoffs
+### toon4s implementation tradeoffs
 
-These are conscious design decisions aligned with our "zero compromises" philosophy:
+These are conscious design decisions:
 
 - **Full AST decode (v0.1.0)**: `Toon.decode()` and `Toon.decodeFrom()` read entire input into memory before parsing. This ensures:
   - **Pure functions**: Decode returns `Either[DecodeError, JsonValue]` with complete error context
@@ -570,13 +570,13 @@ These are conscious design decisions aligned with our "zero compromises" philoso
 
   **Full streaming decode** (incremental parsing of entire documents) is planned for v0.2.0 while maintaining functional purity (likely using FS2/ZIO Stream integration).
 
-- **Deterministic ordering**: We use `VectorMap` (32+ occurrences) instead of `HashMap` because **predictable field ordering** matters more than raw lookup speed. This aids debugging, testing, and spec compliance.
+- **Deterministic ordering**: We use `VectorMap` instead of `HashMap` because **predictable field ordering** matters more than raw lookup speed. This aids debugging, testing, and spec compliance.
 
-- **No mutation**: We eliminated all 60+ vars and 30+ while loops in favor of tail recursion. Trade: ~20% throughput decrease. Gain: **zero race conditions, zero hidden state, composable functions**.
+- **No mutation**: Immutability with tailrec. Trade: ~20% throughput decrease. Gain: **zero race conditions, zero hidden state, composable functions**.
 
 - **No external dependencies (core)**: Zero deps means you can't use Jackson/Circe codecs directly. Trade: manual integration. Gain: **491KB JAR, zero CVEs, zero conflicts**.
 
-### Minor Gotchas
+### Minor gotchas
 
 - **Locale-specific numbers**: Encoder always uses `.` decimal separators (spec requirement). Normalize inputs beforehand.
 - **CLI tokenizer**: `TokenEstimator` currently defaults to `CL100K_BASE` (GPT-4/3.5). Model-specific differences apply (easily configurable).
@@ -635,7 +635,7 @@ sbt jmhDev   # quick check
 sbt jmhFull  # heavy run
 ```
 
-#### Benchmarks Methodology
+#### Benchmarks methodology
 
 - Intent: publish indicative throughput numbers for common shapes (tabular, lists, nested objects) under reproducible settings.
 - Harness: JMH via `sbt-jmh` 0.4.5. Single thread (`-t1`), single fork (`-f1`).

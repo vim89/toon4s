@@ -33,4 +33,7 @@ final case class EncodeOptions(
     indent: Int = 2,
     delimiter: Delimiter = Delimiter.Comma,
     lengthMarker: Boolean = false
-)
+) {
+  require(indent > 0, s"indent must be positive, got: $indent")
+  require(indent <= 32, s"indent must be <= 32 for readability, got: $indent")
+}

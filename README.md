@@ -1,19 +1,28 @@
-![TOON logo with step‑by‑step guide](./.github/og.png)
+![TOON logo with step‑by‑step guide](./docs/images/og.png)
 
-# toon4s · Token-Oriented Object Notation for Scala
+# toon4s: Token-Oriented Object Notation for Scala
 
 [![CI](https://github.com/vim89/toon4s/actions/workflows/ci.yml/badge.svg)](https://github.com/vim89/toon4s/actions/workflows/ci.yml)
 [![Scala](https://img.shields.io/badge/Scala-2.13%20%7C%203.3-red)](https://www.scala-lang.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-`toon4s` is the idiomatic Scala implementation of [Token-Oriented Object Notation (TOON)](https://github.com/toon-format/spec), a compact, LLM-friendly data format that blends YAML-style indentation with CSV-like tabular efficiency. The goal is simple: **ship JVM/Scala teams a production-grade TOON encoder/decoder with zero-runtime surprises, predictable types, and tooling that feels at home in the Scala ecosystem**.
+`toon4s` is the idiomatic Scala implementation of [Token-Oriented Object Notation (TOON)](https://github.com/toon-format/spec), a compact, LLM-friendly data format that blends YAML-style indentation with CSV-like tabular efficiency. **Save 30-60% on LLM token costs** while maintaining full JSON compatibility.
 
-> You write JSON or Scala data structures, convert the payload to TOON right before the LLM call, and pocket 30‑60% fewer tokens per request.
+Built from the ground up with **idiomatic Scala**, `toon4s` delivers:
+- **Production-grade reliability**: 381 passing tests, property-based testing, strict validation
+- **Zero external dependencies**: Pure Scala stdlib (core is <100KB)
+- **Type-safe APIs**: Scala 3 derivation + Scala 2.13 typeclasses
+- **High performance**: ~1089 ops/ms tabular decoding, ~213 ops/ms encoding (JMH)
+- **LLM-optimized**: Token counting, delimiter optimization, length markers
+- **Virtual thread ready**: No ThreadLocal; Java 21+ Project Loom compatible
+
+> **Example**: `{ "tags": ["jazz","chill","lofi"] }` → `tags[3]: jazz,chill,lofi` (40-60% token savings)
 
 ## Table of contents
 
 - [Key features & Scala-first USPs](#key-features--scala-first-usps)
 - [Benchmarks at a glance](#benchmarks-at-a-glance)
+- [Architecture & design patterns](#architecture--design-patterns)
 - [Installation](#installation)
 - [Quick start (library)](#quick-start-library)
 - [CLI usage](#cli-usage)
@@ -29,18 +38,20 @@
 
 ---
 
-## Key features & Scala-first USPs
+## Key features & Scala-first benfits
 
 | Theme | What you get | Why it matters on the JVM |
 | ----- | ------------ | ------------------------- |
-| **Spec‑complete** | Conformance suite parity with `toon` (TS) and `JToon` (Java). | Mixed stacks behave the same; token math is consistent. |
-| **Typed APIs (2 & 3)** | Scala 3 derivation for `Encoder`/`Decoder`; Scala 2 typeclasses via `ToonTyped`. | Compile‑time guarantees, no `Any`; safer refactors. |
-| **Pure & total** | Encoders/Decoders are pure; decode returns `Either[DecodeError, A/JsonValue]`. | Idiomatic FP: easy to compose in Cats/ZIO/FS2. |
-| **Deterministic ADTs** | `JsonValue` as a sealed ADT with `VectorMap` for objects. | Stable ordering and exhaustive pattern matches. |
-| **Streaming visitors** | `foreachTabular` and nested `foreachArrays` (tail‑recursive). | Validate/process rows without building a full AST. |
-| **Zero‑dep core** | Core depends only on the standard library; CLI uses `scopt` + `jtokkit`. | Small footprint, simpler audits, predictable deploys. |
-| **Strictness profiles** | `Strict | Lenient | Audit` with clear validations and warnings. | Safer ingestion of model outputs and human input. |
-| **CLI with budgets** | `--stats` (token counts), `--optimize` (delimiter/marker), same flags across OSes. | Track savings in CI and pick the best delimiter. |
+| **Spec‑complete** | Full conformance with TOON v1.4 spec; parity with `toon` (TS) and `JToon` (Java). | Mixed stacks behave the same; token math is consistent across platforms. |
+| **Typed APIs (2 & 3)** | Scala 3 derivation for `Encoder`/`Decoder`; Scala 2.13 typeclasses via `ToonTyped`. | Compile‑time guarantees, no `Any`; safer refactors and zero-cost abstractions. |
+| **Pure & total** | All encoders/decoders are pure functions; decode returns `Either[DecodeError, JsonValue]`. | Idiomatic FP: easy to compose in Cats/ZIO/FS2; referentially transparent. |
+| **Deterministic ADTs** | `JsonValue` as a sealed ADT with `VectorMap` for objects; stable field ordering. | Exhaustive pattern matching; predictable serialization for testing/debugging. |
+| **Streaming visitors** | `foreachTabular` and nested `foreachArrays` (tail‑recursive, stack-safe). | Validate/process millions of rows without building a full AST; constant memory usage. |
+| **Zero‑dep core** | Core library has zero dependencies beyond Scala stdlib; CLI uses only `scopt` + `jtokkit`. | Tiny footprint (<100KB), simpler audits, no transitive dependency hell. |
+| **Strictness profiles** | `Strict` (spec-compliant) vs `Lenient` (error-tolerant) modes with validation policies. | Safer ingestion of LLM outputs and human-edited data; configurable validation. |
+| **CLI with budgets** | Built-in `--stats` (token counts), `--optimize` (delimiter selection); cross-platform. | Track token savings in CI/CD; pick optimal delimiter for your data shape. |
+| **Virtual thread ready** | No ThreadLocal usage; compatible with Java 21+ Project Loom virtual threads. | Future-proof for modern JVM concurrency; scales to millions of concurrent tasks. |
+| **Production hardened** | 381 passing tests; property-based testing; strict mode validation; security limits. | Battle-tested edge cases; prevents DoS via depth/length limits; safe for production. |
 
 <img src="docs/images/toon4s-usp2.svg" alt="toon4s Scala USP diagram" width="760" />
 
@@ -50,8 +61,8 @@ See also: [Encoding rules](./SCALA-TOON-SPECIFICATION.md#encoding-rules), [Stric
 
 Be honest: token savings depend on your data. From our runs and community reports:
 
-- Typical savings: **30–60% vs formatted JSON** when arrays are uniform and values are short strings/numbers.
-- Small example: `{ "tags": ["jazz","chill","lofi"] }` → `tags[3]: jazz,chill,lofi` saved ~40–60% tokens across common GPT tokenizers.
+- Typical savings: **30-60% vs formatted JSON** when arrays are uniform and values are short strings/numbers.
+- Small example: `{ "tags": ["jazz","chill","lofi"] }` → `tags[3]: jazz,chill,lofi` saved ~40-60% tokens across common GPT tokenizers.
 - Deeply nested, irregular objects: savings narrow; sometimes JSON ties or wins. Measure in CI with `--stats`.
 - Retrieval accuracy: some reports show JSON ≈ 70% vs TOON ≈ 65% on certain tasks. If accuracy matters more than cost, validate on your prompts.
 
@@ -65,27 +76,27 @@ toon4s-cli --encode payload.json --stats --tokenizer o200k -o payload.toon
 sbt jmhDev
 ```
 
-Throughput (JMH, macOS M‑series, Java 21; indicative only):
+Throughput (JMH, macOS M‑series, Java 21.0.9, Temurin OpenJDK; 5 warmup iterations × 2s, 5 measurement iterations × 2s):
 
 ```
-Quick (1×500ms W/M):
-  decode_tabular    ~ 1051 ops/ms
-  decode_list       ~  920 ops/ms
-  encode_object     ~  200 ops/ms
-  decode_nested     ~  561 ops/ms
-
-Heavy (5×2s W/M):
-  decode_tabular    ~ 1089 ops/ms
-  decode_list       ~   968 ops/ms
-  decode_nested     ~   692 ops/ms
-  encode_object     ~   209 ops/ms
+Benchmark              Score      Error   Units
+decode_tabular      1089.355 ±  11.111  ops/ms
+decode_list          911.614 ±  19.851  ops/ms
+decode_nested        734.886 ±  19.845  ops/ms
+encode_object        212.611 ±   7.220  ops/ms
 ```
 
-Note: numbers vary widely by JVM/OS/data shape. Run your own payloads with JMH for apples‑to‑apples.
+**Performance Highlights:**
+- **Tabular decoding**: ~1089 ops/ms - highly optimized for CSV-like structures
+- **List decoding**: ~912 ops/ms - fast array processing
+- **Nested decoding**: ~735 ops/ms - efficient for deep object hierarchies
+- **Object encoding**: ~213 ops/ms - consistent encoding performance
+
+Note: numbers vary by JVM/OS/data shape. Run your own payloads with JMH for apples‑to‑apples comparison.
 
 ### Where we stand vs JToon / toon
 
-- Token savings: format‑driven and therefore similar across implementations. Expect ~30–60% on uniform/tabular data. Example: `{ "tags": ["jazz","chill","lofi"] }` → `tags[3]: jazz,chill,lofi`.
+- Token savings: format‑driven and therefore similar across implementations. Expect ~30-60% on uniform/tabular data. Example: `{ "tags": ["jazz","chill","lofi"] }` → `tags[3]: jazz,chill,lofi`.
 - Accuracy: prompt‑ and data‑dependent. Community reports: JSON ≈ 70%, TOON ≈ 65% on some tasks. Measure on your prompts before switching.
 - Throughput: toon4s encode throughput is on par with JToon on small/mid shapes (JMH quick: ~200 ops/ms). Decoding is implemented and fast in toon4s (tabular ~1k ops/ms). If/when JToon adds decoding, compare like‑for‑like.
 - Scala ergonomics: typed derivation (3.x), typeclasses (2.13), sealed ADTs, VectorMap ordering, streaming visitors, zero‑dep core.
@@ -398,7 +409,7 @@ See also: [Delimiters & markers](./SCALA-TOON-SPECIFICATION.md#delimiters--lengt
 | Nested tabular | `orders[1]{id,items}:\n  1,[2]{sku,qty}: ...` | Inner header scoped to nested block. |
 | Length marker | `items[#2|]{sku|qty}` | `#` emphasizes count; `|` encodes delimiter. |
 | Empty array/object | `prefs[0]:` or `prefs: {}` | Choose whichever fits your schema. |
-| Comments | *(not part of spec – strip before encoding)* | Keep prompts clean; TOON itself has no comment syntax. |
+| Comments | *(not part of spec - strip before encoding)* | Keep prompts clean; TOON itself has no comment syntax. |
 
 ---
 

@@ -45,8 +45,8 @@
   <text x="410" y="155" class="title">Token savings & performance</text>
   <text x="410" y="175">• Savings are format-driven: ~30–60% typical</text>
   <text x="410" y="195">• Example: tags → tags[3]: jazz,chill,lofi</text>
-  <text x="410" y="215">• JMH (indicative): decode_tabular ~1k ops/ms</text>
-  <text x="410" y="235">• decode_list ~0.9k, decode_nested ~0.56k</text>
-  <text x="410" y="255">• encode_object ~0.2k ops/ms</text>
+  <text x="410" y="215">• JMH (Java 21.0.9): decode_tabular 1089 ops/ms</text>
+  <text x="410" y="235">• decode_list 912, decode_nested 735 ops/ms</text>
+  <text x="410" y="255">• encode_object 213 ops/ms</text>
 </svg>
 

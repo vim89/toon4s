@@ -1,299 +1,202 @@
 package io.toonformat.toon4s
 package decode
 
-import io.toonformat.toon4s.error.DecodeError
-import io.toonformat.toon4s.{Constants => C}
+import io.toonformat.toon4s.decode.parsers._
 import io.toonformat.toon4s.{Delimiter, JsonValue}
 
-final case class ArrayHeaderInfo(
-    key: Option[String],
-    length: Int,
-    delimiter: Delimiter,
-    fields: List[String],
-    hasLengthMarker: Boolean
-)
-
+/** Facade for all parsing operations.
+  *
+  * ==Design Pattern: Facade Pattern==
+  *
+  * This object provides a unified interface to all specialized parsers, maintaining backward
+  * compatibility while delegating to focused parser objects.
+  *
+  * ==Decomposition Strategy==
+  * Parser responsibilities have been split into:
+  *   - [[parsers.StringLiteralParser]] - String escaping/unescaping
+  *   - [[parsers.KeyParser]] - Key parsing (quoted/unquoted)
+  *   - [[parsers.PrimitiveParser]] - Primitive value detection
+  *   - [[parsers.DelimitedValuesParser]] - CSV-style parsing
+  *   - [[parsers.ArrayHeaderParser]] - Array header syntax
+  *
+  * This follows the Single Responsibility Principle (#27) while maintaining the existing API
+  * surface for backward compatibility.
+  *
+  * @example
+  *   {{{
+  * import io.toonformat.toon4s.decode.Parser._
+  *
+  * val primitive = parsePrimitiveToken("42")  // JNumber(42)
+  * val key = parseKeyToken("name: value", 0)  // ("name", 6)
+  * val header = parseArrayHeaderLine("arr[3]: 1,2,3", Delimiter.Comma)
+  *   }}}
+  */
 object Parser {
+
+  // Re-export ArrayHeaderInfo for backward compatibility
+  type ArrayHeaderInfo = parsers.ArrayHeaderInfo
+  val ArrayHeaderInfo = parsers.ArrayHeaderInfo
+
+  // ========================================================================
+  // Array Header Parsing
+  // ========================================================================
+
+  /** Parse an array header line.
+    *
+    * Delegates to [[parsers.ArrayHeaderParser]].
+    *
+    * @see
+    *   [[parsers.ArrayHeaderParser.parseArrayHeaderLine]]
+    */
   def parseArrayHeaderLine(
       content: String,
       defaultDelim: Delimiter
-  ): Option[(ArrayHeaderInfo, Option[String])] = {
-    val trimmed = content.dropWhile(_.isWhitespace)
-    if (trimmed.isEmpty) None
-    else {
-      var cursor                 = content.length - trimmed.length
-      var keyOpt: Option[String] = None
+  ): Option[(ArrayHeaderInfo, Option[String])] =
+    ArrayHeaderParser.parseArrayHeaderLine(content, defaultDelim)
 
-      def skipWhitespace(pos: Int): Int = {
-        var cur = pos
-        while (cur < content.length && content.charAt(cur).isWhitespace) cur += 1
-        cur
-      }
+  /** Parse bracket segment for array length and delimiter.
+    *
+    * Delegates to [[parsers.ArrayHeaderParser]].
+    *
+    * @see
+    *   [[parsers.ArrayHeaderParser.parseBracketSegment]]
+    */
+  def parseBracketSegment(seg: String, defaultDelim: Delimiter): (Int, Delimiter, Boolean) =
+    ArrayHeaderParser.parseBracketSegment(seg, defaultDelim)
 
-      val keyParsed = trimmed.headOption match {
-        case Some('"') =>
-          val relativeClosing = findClosingQuote(trimmed, 0)
-          if (relativeClosing < 0) false
-          else {
-            val rawKey = trimmed.substring(0, relativeClosing + 1)
-            keyOpt = Some(parseStringLiteral(rawKey))
-            cursor += relativeClosing + 1
-            true
-          }
-        case Some('[') => true
-        case _         =>
-          val bracketPos = trimmed.indexOf('[')
-          if (bracketPos < 0) false
-          else {
-            val rawKey = trimmed.substring(0, bracketPos).trim
-            if (rawKey.nonEmpty) keyOpt = Some(rawKey)
-            cursor += bracketPos
-            true
-          }
-      }
-
-      if (!keyParsed) None
-      else {
-        cursor = skipWhitespace(cursor)
-        val bracketStart = cursor
-        val bracketEnd   = content.indexOf(']', bracketStart)
-        if (
-          cursor >= content.length ||
-          content.charAt(cursor) != '[' ||
-          bracketEnd < 0
-        ) None
-        else {
-          val bracketSegment                 = content.substring(bracketStart + 1, bracketEnd)
-          val (length, delimiter, hasMarker) = parseBracketSegment(bracketSegment, defaultDelim)
-          cursor = skipWhitespace(bracketEnd + 1)
-
-          def parseFieldsSection(start: Int): Option[(List[String], Int)] = {
-            if (start < content.length && content.charAt(start) == '{') {
-              val braceEnd = content.indexOf('}', start)
-              if (braceEnd < 0) None
-              else {
-                val fieldsSegment = content.substring(start + 1, braceEnd)
-                val fields        =
-                  if (fieldsSegment.nonEmpty)
-                    parseDelimitedValues(fieldsSegment, delimiter)
-                      .map(
-                        token => parseStringLiteral(token.trim)
-                      )
-                      .toList
-                  else Nil
-                Some(fields -> skipWhitespace(braceEnd + 1))
-              }
-            } else Some(Nil -> skipWhitespace(start))
-          }
-
-          parseFieldsSection(cursor).flatMap {
-            case (fields, nextCursor) =>
-              val colonCursor = skipWhitespace(nextCursor)
-              if (colonCursor >= content.length || content.charAt(colonCursor) != ':') None
-              else {
-                val inline = content.substring(colonCursor + 1).trim match {
-                  case ""    => None
-                  case other => Some(other)
-                }
-                Some(ArrayHeaderInfo(keyOpt, length, delimiter, fields, hasMarker) -> inline)
-              }
-          }
-        }
-      }
-    }
-  }
-
-  def parseBracketSegment(seg: String, defaultDelim: Delimiter): (Int, Delimiter, Boolean) = {
-    var hasMarker = false
-    var content   = seg
-    if (content.startsWith("#")) {
-      hasMarker = true
-      content = content.drop(1)
-    }
-    var delimiter = defaultDelim
-    if (content.endsWith("\t")) {
-      delimiter = Delimiter.Tab
-      content = content.dropRight(1)
-    } else if (content.endsWith("|")) {
-      delimiter = Delimiter.Pipe
-      content = content.dropRight(1)
-    }
-    val len       = content.toIntOption.getOrElse {
-      throw DecodeError.InvalidHeader(s"Invalid array length: $seg")
-    }
-    (len, delimiter, hasMarker)
-  }
-
-  def parseDelimitedValues(input: String, delim: Delimiter): Vector[String] = {
-    val out      = scala.collection.mutable.ArrayBuffer.empty[String]
-    val builder  = new StringBuilder
-    var i        = 0
-    var inQuotes = false
-    while (i < input.length) {
-      val ch = input.charAt(i)
-      if (ch == '\\' && i + 1 < input.length && inQuotes) {
-        builder.append(ch).append(input.charAt(i + 1))
-        i += 2
-      } else if (ch == '"') {
-        inQuotes = !inQuotes
-        builder.append(ch)
-        i += 1
-      } else if (ch == delim.char && !inQuotes) {
-        out += builder.result().trim
-        builder.clear()
-        i += 1
-      } else {
-        builder.append(ch)
-        i += 1
-      }
-    }
-    if (builder.nonEmpty || out.nonEmpty) out += builder.result().trim
-    out.toVector
-  }
-
-  def mapRowValuesToPrimitives(values: Vector[String]): Vector[JsonValue] = {
-    values.map {
-      token =>
-        parsePrimitiveToken(token) match {
-          case s: JsonValue.JString => s
-          case n: JsonValue.JNumber => n
-          case b: JsonValue.JBool   => b
-          case JsonValue.JNull      => JsonValue.JNull
-          case other                =>
-            throw DecodeError.Syntax(
-              s"Tabular rows must contain primitive values, but found: $other"
-            )
-        }
-    }
-  }
-
-  def parsePrimitiveToken(token: String): JsonValue = {
-    val trimmed = token.trim
-    if (trimmed.isEmpty) JsonValue.JString("")
-    else if (trimmed.headOption.contains('"')) JsonValue.JString(parseStringLiteral(trimmed))
-    else if (isBooleanOrNullLiteral(trimmed))
-      trimmed match {
-        case C.TrueLiteral  => JsonValue.JBool(true)
-        case C.FalseLiteral => JsonValue.JBool(false)
-        case _              => JsonValue.JNull
-      }
-    else if (isNumericLiteral(trimmed)) {
-      val bd   = BigDecimal(trimmed)
-      val norm = if (bd == BigDecimal(0) && trimmed.startsWith("-")) BigDecimal(0) else bd
-      JsonValue.JNumber(norm)
-    } else JsonValue.JString(trimmed)
-  }
-
-  private def isBooleanOrNullLiteral(value: String): Boolean =
-    value == C.TrueLiteral || value == C.FalseLiteral || value == C.NullLiteral
-
-  // Fast pre-check before constructing BigDecimal: simple numeric regex
-  private val NumericPattern                           = "^-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$".r
-  private def isNumericLiteral(token: String): Boolean = {
-    if (token.isEmpty) false
-    else {
-      val unsigned       = if (token.head == '-' || token.head == '+') token.tail else token
-      val hasLeadingZero = unsigned.length > 1 && unsigned.head == '0' && unsigned(1) != '.'
-      unsigned.nonEmpty && !hasLeadingZero && NumericPattern.matches(token)
-    }
-  }
-
-  def parseStringLiteral(token: String): String = {
-    val trimmed = token.trim
-    trimmed.headOption.filter(_ == '"') match {
-      case Some(_) =>
-        val end = findClosingQuote(trimmed, 0)
-        if (end < 0 || end != trimmed.length - 1)
-          throw DecodeError.Syntax("Unterminated or trailing content after string literal")
-        unescapeString(trimmed.slice(1, end))
-      case None    => trimmed
-    }
-  }
-
-  def findClosingQuote(content: String, start: Int): Int = {
-    var i       = start + 1
-    var closed  = -1
-    var escaped = false
-    while (i < content.length && closed == -1) {
-      val ch = content.charAt(i)
-      if (escaped) escaped = false
-      else if (ch == '\\') escaped = true
-      else if (ch == '"') closed = i
-      i += 1
-    }
-    closed
-  }
-
-  def unescapeString(s: String): String = {
-    val builder = new StringBuilder
-    var i       = 0
-    while (i < s.length) {
-      s.charAt(i) match {
-        case '\\' if i + 1 < s.length =>
-          s.charAt(i + 1) match {
-            case '"'   => builder.append('"')
-            case '\\'  => builder.append('\\')
-            case 'n'   => builder.append('\n')
-            case 'r'   => builder.append('\r')
-            case 't'   => builder.append('\t')
-            case other =>
-              throw DecodeError.Syntax(s"Invalid escape sequence: \\$other")
-          }
-          i += 2
-        case '\\'                     =>
-          throw DecodeError.Syntax("Unterminated escape sequence in string literal")
-        case c                        =>
-          builder.append(c)
-          i += 1
-      }
-    }
-    builder.result()
-  }
-
-  def parseUnquotedKey(content: String, start: Int): (String, Int) = {
-    var end = start
-    while (end < content.length && content.charAt(end) != C.Colon) end += 1
-    if (end >= content.length || content.charAt(end) != C.Colon)
-      throw DecodeError.Syntax("Missing colon after key")
-    val key = content.substring(start, end).trim
-    (key, end + 1)
-  }
-
-  def parseQuotedKey(content: String, start: Int): (String, Int) = {
-    val closing = findClosingQuote(content, start)
-    if (closing < 0) throw DecodeError.Syntax("Unterminated quoted key")
-    if (closing + 1 >= content.length || content.charAt(closing + 1) != C.Colon)
-      throw DecodeError.Syntax("Missing colon after key")
-    val key     = unescapeString(content.substring(start + 1, closing))
-    (key, closing + 2)
-  }
-
-  def parseKeyToken(content: String, start: Int): (String, Int) =
-    if (content.charAt(start) == '"') parseQuotedKey(content, start)
-    else parseUnquotedKey(content, start)
-
-  def findUnquotedChar(content: String, target: Char): Int = {
-    var inQuotes = false
-    var i        = 0
-    var result   = -1
-    while (i < content.length && result == -1) {
-      val ch = content.charAt(i)
-      if (ch == '\\' && inQuotes && i + 1 < content.length) i += 2
-      else if (ch == '"') {
-        inQuotes = !inQuotes
-        i += 1
-      } else if (ch == target && !inQuotes) {
-        result = i
-      } else {
-        i += 1
-      }
-    }
-    result
-  }
-
+  /** Check if content is an array header after list hyphen.
+    *
+    * Delegates to [[parsers.ArrayHeaderParser]].
+    *
+    * @see
+    *   [[parsers.ArrayHeaderParser.isArrayHeaderAfterHyphen]]
+    */
   def isArrayHeaderAfterHyphen(content: String): Boolean =
-    content.trim.startsWith("[") && findUnquotedChar(content, C.Colon) != -1
+    ArrayHeaderParser.isArrayHeaderAfterHyphen(content)
 
+  /** Check if content is an object field after list hyphen.
+    *
+    * Delegates to [[parsers.ArrayHeaderParser]].
+    *
+    * @see
+    *   [[parsers.ArrayHeaderParser.isObjectFirstFieldAfterHyphen]]
+    */
   def isObjectFirstFieldAfterHyphen(content: String): Boolean =
-    findUnquotedChar(content, C.Colon) != -1
+    ArrayHeaderParser.isObjectFirstFieldAfterHyphen(content)
+
+  // ========================================================================
+  // Delimited Values Parsing
+  // ========================================================================
+
+  /** Parse delimited values with quote awareness.
+    *
+    * Delegates to [[parsers.DelimitedValuesParser]].
+    *
+    * @see
+    *   [[parsers.DelimitedValuesParser.parseDelimitedValues]]
+    */
+  def parseDelimitedValues(input: String, delim: Delimiter): Vector[String] =
+    DelimitedValuesParser.parseDelimitedValues(input, delim)
+
+  /** Map row values to primitive JsonValues.
+    *
+    * Delegates to [[parsers.DelimitedValuesParser]].
+    *
+    * @see
+    *   [[parsers.DelimitedValuesParser.mapRowValuesToPrimitives]]
+    */
+  def mapRowValuesToPrimitives(values: Vector[String]): Vector[JsonValue] =
+    DelimitedValuesParser.mapRowValuesToPrimitives(values)
+
+  // ========================================================================
+  // Primitive Value Parsing
+  // ========================================================================
+
+  /** Parse a primitive token into a JsonValue.
+    *
+    * Delegates to [[parsers.PrimitiveParser]].
+    *
+    * @see
+    *   [[parsers.PrimitiveParser.parsePrimitiveToken]]
+    */
+  def parsePrimitiveToken(token: String): JsonValue =
+    PrimitiveParser.parsePrimitiveToken(token)
+
+  // ========================================================================
+  // String Literal Parsing
+  // ========================================================================
+
+  /** Parse a string literal with escape sequences.
+    *
+    * Delegates to [[parsers.StringLiteralParser]].
+    *
+    * @see
+    *   [[parsers.StringLiteralParser.parseStringLiteral]]
+    */
+  def parseStringLiteral(token: String): String =
+    StringLiteralParser.parseStringLiteral(token)
+
+  /** Find closing quote in a string.
+    *
+    * Delegates to [[parsers.StringLiteralParser]].
+    *
+    * @see
+    *   [[parsers.StringLiteralParser.findClosingQuote]]
+    */
+  def findClosingQuote(content: String, start: Int): Int =
+    StringLiteralParser.findClosingQuote(content, start)
+
+  /** Unescape a string by converting escape sequences.
+    *
+    * Delegates to [[parsers.StringLiteralParser]].
+    *
+    * @see
+    *   [[parsers.StringLiteralParser.unescapeString]]
+    */
+  def unescapeString(s: String): String =
+    StringLiteralParser.unescapeString(s)
+
+  /** Find unquoted character in content.
+    *
+    * Delegates to [[parsers.StringLiteralParser]].
+    *
+    * @see
+    *   [[parsers.StringLiteralParser.findUnquotedChar]]
+    */
+  def findUnquotedChar(content: String, target: Char): Int =
+    StringLiteralParser.findUnquotedChar(content, target)
+
+  // ========================================================================
+  // Key Parsing
+  // ========================================================================
+
+  /** Parse a key token (quoted or unquoted).
+    *
+    * Delegates to [[parsers.KeyParser]].
+    *
+    * @see
+    *   [[parsers.KeyParser.parseKeyToken]]
+    */
+  def parseKeyToken(content: String, start: Int): (String, Int) =
+    KeyParser.parseKeyToken(content, start)
+
+  /** Parse an unquoted key.
+    *
+    * Delegates to [[parsers.KeyParser]].
+    *
+    * @see
+    *   [[parsers.KeyParser.parseUnquotedKey]]
+    */
+  def parseUnquotedKey(content: String, start: Int): (String, Int) =
+    KeyParser.parseUnquotedKey(content, start)
+
+  /** Parse a quoted key.
+    *
+    * Delegates to [[parsers.KeyParser]].
+    *
+    * @see
+    *   [[parsers.KeyParser.parseQuotedKey]]
+    */
+  def parseQuotedKey(content: String, start: Int): (String, Int) =
+    KeyParser.parseQuotedKey(content, start)
 }

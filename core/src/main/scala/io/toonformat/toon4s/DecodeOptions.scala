@@ -76,4 +76,23 @@ final case class DecodeOptions(
     maxDepth: Option[Int] = Some(1000),
     maxArrayLength: Option[Int] = Some(100000),
     maxStringLength: Option[Int] = Some(1000000)
-)
+) {
+  // Runtime validation for all parameters
+  require(indent > 0, s"indent must be positive, got: $indent")
+  require(indent <= 32, s"indent must be <= 32 for readability, got: $indent")
+
+  maxDepth.foreach {
+    depth =>
+      require(depth > 0, s"maxDepth must be positive if specified, got: $depth")
+  }
+
+  maxArrayLength.foreach {
+    len =>
+      require(len > 0, s"maxArrayLength must be positive if specified, got: $len")
+  }
+
+  maxStringLength.foreach {
+    len =>
+      require(len > 0, s"maxStringLength must be positive if specified, got: $len")
+  }
+}

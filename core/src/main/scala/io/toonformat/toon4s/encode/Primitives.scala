@@ -54,13 +54,35 @@ private[toon4s] object Primitives {
   private def isNumericLike(value: String): Boolean =
     NumericLikePattern.matches(value) || LeadingZeroPattern.matches(value)
 
-  private val tlBuilder = new ThreadLocal[StringBuilder] {
-    override def initialValue(): StringBuilder = new StringBuilder
-  }
-
+  /** Escape a string by converting special characters to escape sequences.
+    *
+    * ==Pure Function - Virtual Thread Friendly==
+    * Uses local StringBuilder instead of ThreadLocal for compatibility with Java virtual threads
+    * (Project Loom).
+    *
+    * ThreadLocal can cause issues with virtual threads because:
+    *   - Virtual threads are cheap and numerous
+    *   - ThreadLocal creates one value per thread
+    *   - Can lead to memory leaks with many virtual threads
+    *
+    * ==Performance Strategy==
+    * Pre-allocates StringBuilder with estimated capacity to minimize resizing.
+    *
+    * @param s
+    *   The string to escape
+    * @return
+    *   Escaped string with special characters converted
+    *
+    * @example
+    *   {{{
+    * escapeString("hello\nworld")  // "hello\\nworld"
+    * escapeString("say \"hi\"")    // "say \\\"hi\\\""
+    *   }}}
+    */
   def escapeString(s: String): String = {
-    val builder = tlBuilder.get()
-    builder.clear()
+    // Pre-allocate with estimated capacity (most strings don't need escaping)
+    // This reduces allocations without ThreadLocal complexity
+    val builder = new StringBuilder(s.length + 16)
     s.foreach {
       case '\\'             => builder.append("\\\\")
       case '"'              => builder.append("\\\"")

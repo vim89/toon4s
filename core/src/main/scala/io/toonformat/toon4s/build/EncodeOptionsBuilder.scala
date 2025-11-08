@@ -9,8 +9,34 @@ final class EncodeOptionsBuilder[HasIndent, HasDelimiter] private (
     private val delimiterOpt: Option[Delimiter],
     private val lengthMarker: Boolean
 ) {
-  def indent(n: Int): EncodeOptionsBuilder[Present, HasDelimiter] =
+
+  /** Set indent size with runtime validation.
+    *
+    * ==Runtime Validation Pattern==
+    * While phantom types provide compile-time validation of required fields, runtime validation
+    * ensures values are within acceptable ranges.
+    *
+    * @param n
+    *   Number of spaces per indentation level
+    * @return
+    *   Builder with indent set
+    * @throws IllegalArgumentException
+    *   if indent is not positive
+    *
+    * @example
+    *   {{{
+    * EncodeOptionsBuilder.empty.indent(2).delimiter(Delimiter.Comma).build
+    * // Ok
+    *
+    * EncodeOptionsBuilder.empty.indent(0).delimiter(Delimiter.Comma).build
+    * // Throws: IllegalArgumentException("Indent must be positive, got: 0")
+    *   }}}
+    */
+  def indent(n: Int): EncodeOptionsBuilder[Present, HasDelimiter] = {
+    require(n > 0, s"Indent must be positive, got: $n")
+    require(n <= 32, s"Indent must be <= 32 for readability, got: $n")
     new EncodeOptionsBuilder(Some(n), delimiterOpt, lengthMarker)
+  }
 
   def delimiter(d: Delimiter): EncodeOptionsBuilder[HasIndent, Present] =
     new EncodeOptionsBuilder(indentOpt, Some(d), lengthMarker)

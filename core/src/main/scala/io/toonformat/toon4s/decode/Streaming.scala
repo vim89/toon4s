@@ -1,6 +1,7 @@
 package io.toonformat.toon4s.decode
 
 import io.toonformat.toon4s._
+import io.toonformat.toon4s.decode.parsers.ArrayHeaderInfo
 import io.toonformat.toon4s.{Constants => C}
 import scala.annotation.tailrec
 

@@ -81,10 +81,14 @@ object Toon {
     * Useful for streaming large outputs directly to files or network sockets without building the
     * entire string in memory.
     *
+    * ==Resource Management Pattern==
+    * Caller is responsible for managing the Writer lifecycle. For automatic resource management,
+    * use [[scala.util.Using]] (Scala 2.13+).
+    *
     * @param value
     *   The value to encode
     * @param out
-    *   The Writer to write TOON output to
+    *   The Writer to write TOON output to (caller must close)
     * @param options
     *   Encoding options
     * @return
@@ -92,9 +96,21 @@ object Toon {
     *
     * @example
     *   {{{
+    * // Manual resource management
     * val writer = new java.io.FileWriter("output.toon")
-    * Toon.encodeTo(data, writer)
-    * writer.close()
+    * try {
+    *   Toon.encodeTo(data, writer)
+    * } finally {
+    *   writer.close()
+    * }
+    *
+    * // Recommended: Using resource management (Scala 2.13+)
+    * import scala.util.Using
+    * import java.nio.file.{Files, Paths}
+    *
+    * Using(Files.newBufferedWriter(Paths.get("output.toon"))) { writer =>
+    *   Toon.encodeTo(data, writer)
+    * }.toEither.left.map(_.getMessage)
     *   }}}
     */
   def encodeTo(

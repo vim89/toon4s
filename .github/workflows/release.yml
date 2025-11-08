@@ -1,17 +1,14 @@
 # Release workflow - Automated publishing to Maven Central
-# Based on sbt-ci-release official pattern (https://github.com/sbt/sbt-ci-release)
+# Based on official sbt-ci-release: https://github.com/sbt/sbt-ci-release
 #
 # Triggers:
-#   - Push git tags starting with 'v' (e.g., v0.1.0) → publishes release to Maven Central
+#   - Push git tags starting with 'v' → publishes release to Maven Central
 #   - Push to main branch → publishes snapshot to Sonatype snapshots
+#   - Manual trigger via workflow_dispatch
 #
 # Required GitHub Secrets:
-#   - PGP_PASSPHRASE: Passphrase for your PGP key
-#   - PGP_SECRET: Base64-encoded PGP private key (export with: gpg --armor --export-secret-keys YOUR_KEY_ID | base64 -w0)
-#   - SONATYPE_USERNAME: Sonatype user token name (not your login username!)
-#   - SONATYPE_PASSWORD: Sonatype user token password (not your login password!)
-#
-# For detailed setup instructions, see: https://github.com/sbt/sbt-ci-release
+#   PGP_PASSPHRASE, PGP_SECRET, SONATYPE_USERNAME, SONATYPE_PASSWORD
+#   See: https://github.com/sbt/sbt-ci-release for setup instructions
 
 name: Release
 
@@ -31,7 +28,7 @@ permissions:
   packages: write
 
 jobs:
-  release:
+  publish:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -39,19 +36,19 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.tag || github.ref }}
-          fetch-depth: 0 # Required for sbt-dynver to calculate version from git
+          fetch-depth: 0
 
-      - name: Setup Java and sbt
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
           cache: sbt
 
-      - name: Verify sbt version
-        run: sbt --version
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
 
-      - name: Print version (from sbt-dynver)
+      - name: Print version
         id: version
         run: |
           VERSION=$(sbt --batch --no-colors 'print version' | tail -1)
@@ -61,23 +58,23 @@ jobs:
       - name: Run tests
         run: sbt --batch --no-colors +test
 
-      - name: Publish to Sonatype (and Maven Central if tag)
+      - name: Publish to Maven Central
+        run: sbt --batch --no-colors ci-release
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        run: sbt --batch --no-colors ci-release
 
-      - name: Package CLI distributions (if release tag)
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Package CLI (if release tag)
+        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.tag != ''
         run: sbt --batch --no-colors cli/Universal/packageBin cli/Universal/packageZipTarball
 
       - name: Create GitHub Release (if release tag)
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.tag != ''
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ github.ref_name }}
+          tag: ${{ github.event.inputs.tag || github.ref_name }}
           name: toon4s ${{ steps.version.outputs.version }}
           body: |
             ## toon4s ${{ steps.version.outputs.version }}
@@ -100,41 +97,27 @@ jobs:
             </dependency>
             ```
 
-            ### CLI Download
-
-            Download the CLI package from the artifacts below.
-
             ### Links
 
             - [Maven Central](https://central.sonatype.com/artifact/io.toonformat/toon4s-core_3/${{ steps.version.outputs.version }})
             - [Documentation](https://github.com/${{ github.repository }})
             - [Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
-
-            ---
-
-            **What's New**: See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
           artifacts: "cli/target/universal/*.zip,cli/target/universal/*.tgz"
           draft: false
           prerelease: false
           makeLatest: true
+          allowUpdates: true
+          updateOnlyUnreleased: false
 
-      - name: Release Summary
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Release summary
+        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.tag != ''
         run: |
-          echo "## 🚀 Release Completed Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "## Release Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Version: \`${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Version**: \`${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Published Artifacts:" >> $GITHUB_STEP_SUMMARY
-          echo "- \`toon4s-core_3\` → Maven Central" >> $GITHUB_STEP_SUMMARY
-          echo "- \`toon4s-core_2.13\` → Maven Central" >> $GITHUB_STEP_SUMMARY
-          echo "- \`toon4s-cli\` → GitHub Release" >> $GITHUB_STEP_SUMMARY
+          echo "**Published**: toon4s-core_3, toon4s-core_2.13 → Maven Central" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Links:" >> $GITHUB_STEP_SUMMARY
-          echo "- [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }})" >> $GITHUB_STEP_SUMMARY
-          echo "- [Maven Central Search](https://central.sonatype.com/search?q=io.toonformat+toon4s&smo=true)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Next Steps:" >> $GITHUB_STEP_SUMMARY
-          echo "1. Wait ~10-30 minutes for Maven Central sync" >> $GITHUB_STEP_SUMMARY
-          echo "2. Verify artifacts at https://central.sonatype.com/artifact/io.toonformat/toon4s-core_3/${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "3. Announce the release!" >> $GITHUB_STEP_SUMMARY
+          echo "**Links**:" >> $GITHUB_STEP_SUMMARY
+          echo "- [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/${{ github.event.inputs.tag || github.ref_name }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [Maven Central](https://central.sonatype.com/artifact/io.toonformat/toon4s-core_3/${{ steps.version.outputs.version }})" >> $GITHUB_STEP_SUMMARY

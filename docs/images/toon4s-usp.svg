@@ -51,7 +51,7 @@
   <circle cx="50"  cy="280" r="6" fill="#2d7a2d"/><text x="65" y="284" class="label">Deterministic ordering via VectorMap for predictable prompts</text>
   <circle cx="470" cy="230" r="6" fill="#2d7a2d"/><text x="485" y="234" class="label">Interop: case classes, Options, java.time, iterables → JsonValue</text>
   <circle cx="470" cy="255" r="6" fill="#2d7a2d"/><text x="485" y="259" class="label">CLI --stats: tokenizer‑aware token counts and % savings</text>
-  <circle cx="470" cy="280" r="6" fill="#2d7a2d"/><text x="485" y="284" class="label">Delimiters & length markers for LLM guardrails</text>
+  <circle cx="470" cy="280" r="6" fill="#2d7a2d"/><text x="485" y="284" class="label">Delimiters and length markers for LLM guardrails</text>
 
   <text x="35" y="320" class="caption">Typical savings 30–60% vs formatted JSON on uniform arrays. Measure yours with --stats; accuracy can vary by task/model.</text>
 </svg>

@@ -119,13 +119,13 @@ class DecodeSpec extends FunSuite {
     result.foreach {
       case JObj(fields) =>
         fields.get("text") match {
-          case Some(JString(s)) =>
-            // After TOON unescape: \" -> ", \\\\ -> \\, \n -> newline, \t -> tab
-            assert(s.contains("quote:\""))
-            assert(s.contains("slash:\\\\"))
-            assert(s.contains("\n"))
-            assert(s.contains("\t"))
-          case other => fail(s"Expected JString, got $other")
+        case Some(JString(s)) =>
+          // After TOON unescape: \" -> ", \\\\ -> \\, \n -> newline, \t -> tab
+          assert(s.contains("quote:\""))
+          assert(s.contains("slash:\\\\"))
+          assert(s.contains("\n"))
+          assert(s.contains("\t"))
+        case other => fail(s"Expected JString, got $other")
         }
       case other => fail(s"Expected JObj, got $other")
     }

@@ -1,6 +1,7 @@
 package io.toonformat.toon4s
 
 import scala.collection.immutable.VectorMap
+
 import io.toonformat.toon4s.JsonValue._
 import munit.ScalaCheckSuite
 import org.scalacheck.{Arbitrary, Gen, Test}

@@ -42,7 +42,7 @@
   <text x="30" y="255">• CI token budgets via CLI --stats</text>
 
   <rect x="400" y="130" width="360" height="160" class="box" />
-  <text x="410" y="155" class="title">Token savings & performance</text>
+  <text x="410" y="155" class="title">Token savings and performance</text>
   <text x="410" y="175">• Savings are format-driven: ~30–60% typical</text>
   <text x="410" y="195">• Example: tags → tags[3]: jazz,chill,lofi</text>
   <text x="410" y="215">• JMH (Java 21.0.9): decode_tabular 1089 ops/ms</text>

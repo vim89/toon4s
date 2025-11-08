@@ -32,6 +32,8 @@ commit_parsers = [
     { message = "^ci",     group = "Continuous Integration" },
     { message = "^chore",  group = "Chores" },
     { message = "^revert", group = "Reverts" },
+    { message = ".*skip ci.*", skip = true },
+    { message = ".*skip release.*", skip = true },
 ]
 filter_commits = false
 topo_order = false

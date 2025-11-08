@@ -120,7 +120,7 @@ lazy val compare = (project in file("compare"))
     publish / skip := true,
     scalacOptions ++= commonScalacOptions,
     libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-databind" % "2.17.2"
+      "com.fasterxml.jackson.core" % "jackson-databind" % "2.20.1"
     ),
     Compile / unmanagedJars ++= {
       sys.env.get("JTOON_JAR").toList.map(file)

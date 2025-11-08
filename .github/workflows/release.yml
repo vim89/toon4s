@@ -56,11 +56,19 @@ jobs:
         run: ./smoke-tests/run-smoke.sh
 
       - name: Import GPG key
-        if: env.PGP_SECRET != ''
+        if: ${{ secrets.PGP_SECRET != '' }}
         env:
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
         run: |
-          echo "$PGP_SECRET" | base64 --decode | gpg --batch --import
+          set -e
+          # Try to treat PGP_SECRET as base64-encoded key (sbt-ci-release / Typelevel style).
+          if echo "$PGP_SECRET" | base64 --decode > /tmp/pgp-key 2>/dev/null; then
+            echo "Detected base64-encoded PGP key, importing..."
+            gpg --batch --import /tmp/pgp-key
+          else
+            echo "PGP_SECRET is not valid base64, importing as ASCII-armored key..."
+            echo "$PGP_SECRET" | gpg --batch --import
+          fi
 
       - name: Publish to repository
         env:

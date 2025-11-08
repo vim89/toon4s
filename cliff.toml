@@ -5,12 +5,24 @@ commit_preprocessors = []
 
 [changelog]
 header = "# Changelog\n"
-body = "{#each versions}{#if not @first}\n\n{/if}## [{version}] - {timestamp}\n\n{body}\n{/each}"
+body = """
+{% for release in releases %}
+## [{{ release.version | default(value="Unreleased") }}]{% if release.date %} - {{ release.date }}{% endif %}
+
+{% for group in release.groups %}
+### {{ group.title }}
+
+{% for commit in group.commits %}
+- {{ commit.message | trim }}
+{% endfor %}
+
+{% endfor %}
+
+{% endfor %}
+"""
 trim = true
 date_order = "desc"
 link_parsing = true
-
-template = "{#each groups}\n### {title}\n\n{#each commits}- {message}\n{#/each}\n{#/each}"
 
 [group]
 "Features" = ["feat", "feature"]
@@ -24,4 +36,12 @@ template = "{#each groups}\n### {title}\n\n{#each commits}- {message}\n{#/each}\
 "Chores" = ["chore", "style"]
 
 [unreleased]
-body = "{#if commits}\n### Unreleased\n\n{#each commits}- {message}\n{#/each}\n{/if}"
+body = """
+{% if commits | length > 0 %}
+## Unreleased
+
+{% for commit in commits %}
+- {{ commit.message | trim }}
+{% endfor %}
+{% endif %}
+"""

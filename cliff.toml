@@ -9,7 +9,11 @@ body = """
 {% for group, commits in commits | group_by(attribute="group") %}
 ### {{ group | striptags | trim | upper_first }}
 {% for commit in commits %}
-- {{ commit.message | trim | split(pat="\n") | first }} ([`{{ commit.id | truncate(length=7, end="") }}`](https://github.com/vim89/toon4s/commit/{{ commit.id }})){% if commit.github.pr_number %} [#{{ commit.github.pr_number }}](https://github.com/vim89/toon4s/pull/{{ commit.github.pr_number }}){% endif %}
+{%- set commit_message = commit.message | trim | split(pat="\n") | first -%}
+{%- set short_hash = commit.id | truncate(length=7, end="") -%}
+- {{ commit_message }} ([`{{ short_hash }}`](https://github.com/vim89/toon4s/commit/{{ commit.id }}))
+{%- if commit.github.pr_number %} [#{{ commit.github.pr_number }}](https://github.com/vim89/toon4s/pull/{{ commit.github.pr_number }}){% endif -%}
+{%- if commit.github.username %} by @{{ commit.github.username }}{% endif %}
 {% endfor %}
 
 {% endfor %}
@@ -20,7 +24,11 @@ trim = true
 conventional_commits = true
 filter_unconventional = false
 split_commits = false
-commit_preprocessors = []
+# Extract PR numbers from commit messages as fallback
+commit_preprocessors = [
+    # Extract PR number from merge commit messages like "Merge pull request #123"
+    { pattern = '.*Merge pull request #(\d+).*', replace_command = 'echo "pr_number: $1"' },
+]
 commit_parsers = [
     { message = "^feat",   group = "Features" },
     { message = "^fix",    group = "Bug fixes" },
@@ -38,8 +46,13 @@ commit_parsers = [
 filter_commits = false
 topo_order = false
 sort_commits = "oldest"
+# Link parsers to convert issue/PR references to links
+link_parsers = [
+    { pattern = "#(\\d+)", href = "https://github.com/vim89/toon4s/issues/$1" },
+    { pattern = "RFC-(\\d+)", text = "ietf-rfc$1", href = "https://datatracker.ietf.org/doc/html/rfc$1" },
+]
 
-# GitHub integration
+# GitHub integration - fetches PR metadata via API
 [remote.github]
 owner = "vim89"
 repo = "toon4s"

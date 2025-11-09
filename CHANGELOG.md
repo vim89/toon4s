@@ -7,11 +7,17 @@
 
 - run scalafmt
 
+- Add toonResult
+
+- Add toonResult - Merge pull request #4 from He-Pin/toonResult
+
 
 
 ### Documentation
 
 - [skip ci] [skip release]
+
+- update CHANGELOG.md [skip ci]
 
 
 

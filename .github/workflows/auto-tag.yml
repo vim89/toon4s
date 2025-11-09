@@ -36,6 +36,7 @@ concurrency:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   auto-tag:
@@ -71,31 +72,21 @@ jobs:
             ci:patch:CI/CD,
             revert:patch:Reverts
 
-      - name: Trigger Release Workflow
+      - name: Trigger Release and Changelog Workflows
         if: steps.tag_version.outputs.new_tag != ''
         uses: actions/github-script@v7
         with:
           script: |
-            await github.rest.actions.createWorkflowDispatch({
+            // Trigger repository dispatch event
+            await github.rest.repos.createDispatchEvent({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: 'release.yml',
-              ref: '${{ steps.tag_version.outputs.new_tag }}',
-              inputs: {
-                tag: '${{ steps.tag_version.outputs.new_tag }}'
+              event_type: 'release-tag-created',
+              client_payload: {
+                tag: '${{ steps.tag_version.outputs.new_tag }}',
+                previous_tag: '${{ steps.tag_version.outputs.previous_tag }}',
+                changelog: '${{ steps.tag_version.outputs.changelog }}'
               }
-            });
-
-      - name: Trigger Changelog Workflow
-        if: steps.tag_version.outputs.new_tag != ''
-        uses: actions/github-script@v7
-        with:
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'changelog.yml',
-              ref: 'main'
             });
 
       - name: Summary

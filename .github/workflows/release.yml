@@ -27,9 +27,8 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v*'
+  repository_dispatch:
+    types: [release-tag-created]
   workflow_dispatch:
     inputs:
       tag:
@@ -58,7 +57,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.tag || github.ref }}
+          ref: ${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref }}
           fetch-depth: 0
 
       - name: Setup Java

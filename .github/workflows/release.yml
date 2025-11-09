@@ -79,7 +79,7 @@ jobs:
           body: |
             ## toon4s ${{ steps.version.outputs.version }}
 
-            Production-grade functional programming showcase implementing [TOON](https://github.com/toon-format/spec).
+            toon4s: Token-Oriented Object Notation for JVM [TOON](https://github.com/toon-format/spec).
 
             ### Installation
 

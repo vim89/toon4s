@@ -179,7 +179,7 @@ jobs:
 
 
   jmh:
-    name: JMH Performance
+    name: JMH performance
     runs-on: ubuntu-latest
     needs: test
     permissions:

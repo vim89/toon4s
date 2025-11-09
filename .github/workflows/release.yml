@@ -55,10 +55,23 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - name: Checkout
+      - name: Determine tag to release
+        id: tag
+        run: |
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          elif [ -n "${{ github.event.client_payload.tag }}" ]; then
+            TAG="${{ github.event.client_payload.tag }}"
+          else
+            TAG="${{ github.ref_name }}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Releasing tag: $TAG"
+
+      - name: Checkout tag
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref }}
+          ref: refs/tags/${{ steps.tag.outputs.tag }}
           fetch-depth: 0
 
       - name: Setup Java
@@ -92,7 +105,7 @@ jobs:
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ github.event.inputs.tag || github.ref_name }}
+          tag: ${{ steps.tag.outputs.tag }}
           name: toon4s ${{ steps.version.outputs.version }}
           body: |
             ## toon4s ${{ steps.version.outputs.version }}
@@ -146,5 +159,5 @@ jobs:
           echo "**Published**: toon4s-core_3, toon4s-core_2.13 → Maven Central" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Links**:" >> $GITHUB_STEP_SUMMARY
-          echo "- [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/${{ github.event.inputs.tag || github.ref_name }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.tag.outputs.tag }})" >> $GITHUB_STEP_SUMMARY
           echo "- [Maven Central](https://central.sonatype.com/artifact/io.toonformat/toon4s-core_3/${{ steps.version.outputs.version }})" >> $GITHUB_STEP_SUMMARY

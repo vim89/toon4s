@@ -3,8 +3,8 @@ addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.2")
 addSbtPlugin("com.github.sbt" % "sbt-native-packager" % "1.10.4")
 
 addSbtPlugin(
-  "com.github.sbt" % "sbt-ci-release" % "1.9.2"
-) // Latest: Includes sbt-dynver, sbt-pgp, sbt-sonatype, sbt-git
+  "com.github.sbt" % "sbt-ci-release" % "1.11.0"
+) // Latest: Includes sbt-dynver, sbt-pgp, sbt-sonatype, sbt-git. Required for Central Portal (legacy OSSRH sunset 2025-06-30)
 
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.5")
 

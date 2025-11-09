@@ -28,7 +28,7 @@ commit_parsers = [
     { message = "^refactor", group = "Refactoring" },
     { message = "^perf",   group = "Performance" },
     { message = "^test",   group = "Tests" },
-    { message = "^build",  group = "Build fystem" },
+    { message = "^build",  group = "Build System" },
     { message = "^ci",     group = "Continuous Integration" },
     { message = "^chore",  group = "Chores" },
     { message = "^revert", group = "Reverts" },

@@ -1,21 +1,34 @@
-# Release workflow - Automated publishing to Maven Central
-# Based on official sbt-ci-release: https://github.com/sbt/sbt-ci-release
+# Release - Automated publishing to Maven Central
+# Uses sbt-ci-release (includes sbt-dynver, sbt-pgp, sbt-sonatype, sbt-git)
 #
 # Triggers:
-#   - Push git tags starting with 'v' → publishes release to Maven Central
-#   - Push to main branch → publishes snapshot to Sonatype snapshots
+#   - Push of version tags (v*) - publishes release to Maven Central
 #   - Manual trigger via workflow_dispatch
 #
+# How it works:
+#   1. Tag is created by auto-tag.yml based on conventional commits
+#   2. This workflow runs automatically when tag is pushed
+#   3. sbt-ci-release detects the tag and publishes to Maven Central
+#   4. Creates GitHub Release with CLI artifacts
+#
 # Required GitHub Secrets:
-#   PGP_PASSPHRASE, PGP_SECRET, SONATYPE_USERNAME, SONATYPE_PASSWORD
-#   See: https://github.com/sbt/sbt-ci-release for setup instructions
+#   - PGP_PASSPHRASE: Passphrase for PGP signing key
+#   - PGP_SECRET: Base64 encoded PGP secret key
+#   - SONATYPE_USERNAME: Sonatype Central Portal username
+#   - SONATYPE_PASSWORD: Sonatype Central Portal password
+#
+# Edge cases handled:
+#   - Only runs on tag pushes (not on main branch pushes)
+#   - Tests run before publishing
+#   - Fails fast if secrets are missing
+#   - Creates GitHub release only for version tags
 
 name: Release
 
 on:
   push:
-    branches: [main]
-    tags: ["v*"]
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       tag:
@@ -29,8 +42,10 @@ permissions:
 
 jobs:
   publish:
+    name: Publish to Maven Central
     runs-on: ubuntu-latest
     timeout-minutes: 60
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,7 +63,7 @@ jobs:
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
 
-      - name: Print version
+      - name: Get version
         id: version
         run: |
           VERSION=$(sbt --batch --no-colors 'print version' | tail -1)
@@ -66,12 +81,10 @@ jobs:
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
 
-      - name: Package CLI (if release tag)
-        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.tag != ''
+      - name: Package CLI artifacts
         run: sbt --batch --no-colors cli/Universal/packageBin cli/Universal/packageZipTarball
 
-      - name: Create GitHub Release (if release tag)
-        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.tag != ''
+      - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.event.inputs.tag || github.ref_name }}
@@ -79,7 +92,7 @@ jobs:
           body: |
             ## toon4s ${{ steps.version.outputs.version }}
 
-            toon4s: Token-Oriented Object Notation for JVM [TOON](https://github.com/toon-format/spec).
+            Token-Oriented Object Notation for JVM - [TOON Format](https://github.com/toon-format/spec)
 
             ### Installation
 
@@ -102,6 +115,10 @@ jobs:
             - [Maven Central](https://central.sonatype.com/artifact/io.toonformat/toon4s-core_3/${{ steps.version.outputs.version }})
             - [Documentation](https://github.com/${{ github.repository }})
             - [Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
+
+            ---
+
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for detailed changes.
           artifacts: "cli/target/universal/*.zip,cli/target/universal/*.tgz"
           draft: false
           prerelease: false
@@ -110,7 +127,6 @@ jobs:
           updateOnlyUnreleased: false
 
       - name: Release summary
-        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.tag != ''
         run: |
           echo "## Release Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

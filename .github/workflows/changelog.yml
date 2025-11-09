@@ -1,34 +1,49 @@
+# Changelog - Automated changelog generation from conventional commits
+# Uses git-cliff for conventional commits -> changelog conversion
+#
+# Triggers:
+#   - Tag creation (v*) - generates changelog for that specific version
+#   - Manual trigger via workflow_dispatch
+#
+# How it works:
+#   1. Runs AFTER a tag is created (by auto-tag.yml)
+#   2. Generates changelog entry for the new version
+#   3. Commits and pushes CHANGELOG.md back to main
+#   4. Uses [skip ci] to prevent infinite loops
+#
+# Edge cases handled:
+#   - First release: generates full changelog
+#   - No changes: skips commit if changelog unchanged
+#   - Concurrent runs: uses concurrency group
+#   - Skip ci commits: ignored by cliff.toml config
+
 name: Changelog
 
 on:
   push:
-    branches: [main, master]
-    paths:
-      - 'core/**'
-      - 'cli/**'
-      - 'docs/**'
-      - 'build.sbt'
-      - 'project/**'
-      - 'cliff.toml'
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 concurrency:
   group: changelog-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   changelog:
+    name: Generate changelog
     runs-on: ubuntu-latest
     timeout-minutes: 5
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Required for full git history
+          ref: main  # Always update changelog on main branch
 
       - name: Install git-cliff
         run: |
@@ -37,11 +52,12 @@ jobs:
           sudo mv git-cliff-*/git-cliff /usr/local/bin/
           git-cliff --version
 
-      - name: Generate changelog
+      - name: Generate full changelog
         run: |
-          git-cliff --config cliff.toml --verbose --unreleased --tag unreleased -o CHANGELOG.md
+          # Generate changelog for all versions (from all tags)
+          git-cliff --config cliff.toml --verbose -o CHANGELOG.md
 
-      - name: Commit changelog
+      - name: Commit and push changelog
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -52,5 +68,13 @@ jobs:
           fi
 
           git add CHANGELOG.md
-          git commit -m "docs: update CHANGELOG.md [skip ci]"
-          git push
+          git commit -m "docs: update CHANGELOG.md for ${{ github.ref_name }} [skip ci]"
+          git push origin main
+
+      - name: Summary
+        run: |
+          echo "## Changelog Updated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version**: \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Changelog has been updated and committed to main branch" >> $GITHUB_STEP_SUMMARY

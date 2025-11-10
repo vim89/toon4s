@@ -17,8 +17,8 @@ import scala.collection.immutable.VectorMap
  * This creates 2 intermediate trees! TreeWalker eliminates this:
  *   - '''Direct encoding''': Jackson JsonNode → Visitor[String] → TOON string (zero intermediate
  *     JsonValue)
- *   - '''Direct decoding''': TOON string → Visitor[JsonNode] → Jackson JsonNode (zero
- *     intermediate JsonValue)
+ *   - '''Direct decoding''': TOON string → Visitor[JsonNode] → Jackson JsonNode (zero intermediate
+ *     JsonValue)
  *
  * ==Real-World Use Case==
  * {{{
@@ -112,8 +112,8 @@ abstract class TreeWalker[Tree] {
   /**
    * Dispatch tree to visitor using pattern matching.
    *
-   * This is the universal adapter - works with any tree structure as long as you implement the
-   * as* methods above.
+   * This is the universal adapter - works with any tree structure as long as you implement the as*
+   * methods above.
    *
    * @param tree
    *   The tree to traverse
@@ -127,49 +127,48 @@ abstract class TreeWalker[Tree] {
   final def dispatch[T](tree: Tree, visitor: Visitor[T]): T = {
     // Try each type in order (mimics pattern matching)
     asString(tree) match {
-      case Some(s) => visitor.visitString(s)
-      case None =>
-        asNumber(tree) match {
-          case Some(n) => visitor.visitNumber(n)
-          case None =>
-            asBool(tree) match {
-              case Some(b) => visitor.visitBool(b)
-              case None =>
-                if (isNull(tree)) {
-                  visitor.visitNull()
-                } else {
-                  asArray(tree) match {
-                    case Some(elements) =>
-                      val results = elements.map(elem => dispatch(elem, visitor))
-                      visitor.visitArray(results)
-                    case None =>
-                      asObject(tree) match {
-                        case Some(fields) =>
-                          val objVisitor = visitor.visitObject()
-                          fields.foreach { case (key, value) =>
-                            objVisitor.visitKey(key)
-                            val valueVisitor = objVisitor.visitValue()
-                            val result = dispatch(value, valueVisitor)
-                            objVisitor.visitValue(result)
-                          }
-                          objVisitor.done()
-                        case None =>
-                          throw new IllegalArgumentException(
-                            s"Unknown tree node type: ${tree.getClass}"
-                          )
-                      }
-                  }
+    case Some(s) => visitor.visitString(s)
+    case None    =>
+      asNumber(tree) match {
+      case Some(n) => visitor.visitNumber(n)
+      case None    =>
+        asBool(tree) match {
+        case Some(b) => visitor.visitBool(b)
+        case None    =>
+          if (isNull(tree)) {
+            visitor.visitNull()
+          } else {
+            asArray(tree) match {
+            case Some(elements) =>
+              val results = elements.map(elem => dispatch(elem, visitor))
+              visitor.visitArray(results)
+            case None =>
+              asObject(tree) match {
+              case Some(fields) =>
+                val objVisitor = visitor.visitObject()
+                fields.foreach {
+                  case (key, value) =>
+                    objVisitor.visitKey(key)
+                    val valueVisitor = objVisitor.visitValue()
+                    val result = dispatch(value, valueVisitor)
+                    objVisitor.visitValue(result)
                 }
+                objVisitor.done()
+              case None =>
+                throw new IllegalArgumentException(
+                  s"Unknown tree node type: ${tree.getClass}"
+                )
+              }
             }
+          }
         }
+      }
     }
   }
 
 }
 
-/**
- * Companion object with adapter examples and utilities.
- */
+/** Companion object with adapter examples and utilities. */
 object TreeWalker {
 
   /**

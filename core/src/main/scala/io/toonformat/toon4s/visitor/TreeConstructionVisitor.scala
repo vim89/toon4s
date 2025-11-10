@@ -141,9 +141,7 @@ final class TreeConstructionObjectVisitor[Tree](parent: TreeConstructionVisitor[
 
 }
 
-/**
- * Companion object with adapter examples.
- */
+/** Companion object with adapter examples. */
 object TreeConstructionVisitor {
 
   /**

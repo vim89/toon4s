@@ -9,44 +9,50 @@ class TreeWalkerSpec extends munit.FunSuite {
 
   // Simple tree type for testing (mimics JsonNode structure)
   sealed trait SimpleTree
+
   case class TString(value: String) extends SimpleTree
+
   case class TNumber(value: BigDecimal) extends SimpleTree
+
   case class TBool(value: Boolean) extends SimpleTree
+
   case object TNull extends SimpleTree
+
   case class TArray(elements: Vector[SimpleTree]) extends SimpleTree
+
   case class TObject(fields: VectorMap[String, SimpleTree]) extends SimpleTree
 
   // Walker implementation for SimpleTree
   object SimpleTreeWalker extends TreeWalker[SimpleTree] {
 
     override def asString(tree: SimpleTree): Option[String] = tree match {
-      case TString(s) => Some(s)
-      case _          => None
+    case TString(s) => Some(s)
+    case _          => None
     }
 
     override def asNumber(tree: SimpleTree): Option[BigDecimal] = tree match {
-      case TNumber(n) => Some(n)
-      case _          => None
+    case TNumber(n) => Some(n)
+    case _          => None
     }
 
     override def asBool(tree: SimpleTree): Option[Boolean] = tree match {
-      case TBool(b) => Some(b)
-      case _        => None
+    case TBool(b) => Some(b)
+    case _        => None
     }
 
     override def isNull(tree: SimpleTree): Boolean = tree match {
-      case TNull => true
-      case _     => false
+    case TNull => true
+    case _     => false
     }
 
     override def asArray(tree: SimpleTree): Option[Vector[SimpleTree]] = tree match {
-      case TArray(elems) => Some(elems)
-      case _             => None
+    case TArray(elems) => Some(elems)
+    case _             => None
     }
 
     override def asObject(tree: SimpleTree): Option[VectorMap[String, SimpleTree]] = tree match {
-      case TObject(fields) => Some(fields)
-      case _               => None
+    case TObject(fields) => Some(fields)
+    case _               => None
     }
 
   }

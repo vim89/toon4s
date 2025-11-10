@@ -665,6 +665,49 @@ val visitor = new JsonRepairVisitor(
 val cleanToon: String = Dispatch(llmJson, visitor)
 ```
 
+**Visitor composition flow:**
+
+```mermaid
+flowchart LR
+    JSON["JsonValue Tree"] --> DISPATCH["Dispatch"]
+    DISPATCH --> REPAIR["JsonRepairVisitor"]
+    REPAIR --> FILTER["FilterKeysVisitor"]
+    FILTER --> STRINGIFY["StringifyVisitor"]
+    STRINGIFY --> OUTPUT["TOON String"]
+
+    style JSON fill:#e1f5ff,stroke:#0066cc,color:#000
+    style DISPATCH fill:#fff4e1,stroke:#cc8800,color:#000
+    style REPAIR fill:#f0e1ff,stroke:#8800cc,color:#000
+    style FILTER fill:#f0e1ff,stroke:#8800cc,color:#000
+    style STRINGIFY fill:#f0e1ff,stroke:#8800cc,color:#000
+    style OUTPUT fill:#e1ffe1,stroke:#2d7a2d,color:#000
+```
+
+**Performance comparison:**
+
+```mermaid
+flowchart TD
+    subgraph WITHOUT["❌ Without Visitors - O(n) space"]
+        W1["parse(row)"] --> W2["Tree 1"]
+        W2 --> W3["filter(tree1)"]
+        W3 --> W4["Tree 2"]
+        W4 --> W5["encode(tree2)"]
+        W5 --> W6["String"]
+    end
+
+    subgraph WITH["✅ With Visitors - O(d) space"]
+        V1["Dispatch(row, visitor)"] --> V2["Single Pass"]
+        V2 --> V3["String"]
+    end
+
+    style W2 fill:#ffe1e1,stroke:#cc0000,color:#000
+    style W4 fill:#ffe1e1,stroke:#cc0000,color:#000
+    style W6 fill:#e1ffe1,stroke:#2d7a2d,color:#000
+    style V1 fill:#f0e1ff,stroke:#8800cc,color:#000
+    style V2 fill:#fff4e1,stroke:#cc8800,color:#000
+    style V3 fill:#e1ffe1,stroke:#2d7a2d,color:#000
+```
+
 **Key visitors:**
 - `StringifyVisitor` - Terminal visitor producing TOON strings
 - `ConstructionVisitor` - Terminal visitor reconstructing JsonValue trees

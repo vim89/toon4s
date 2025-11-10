@@ -799,16 +799,20 @@ sequenceDiagram
 
 **Performance:** O(n) time, O(d) space where d = depth. Perfect for processing millions of rows with constant memory.
 
-**Jackson/Circe interop (zero-overhead):**
+**Jackson/Circe interop (zero-overhead, typeclass pattern):**
 
 ```scala
-// Encode Jackson JsonNode directly to TOON without JsonValue
-import com.fasterxml.jackson.databind.JsonNode
+import io.toonformat.toon4s.visitor.TreeWalkerOps._
 
+// Setup: copy JacksonWalker adapter from TreeWalker scaladocs
+implicit val walker: TreeWalker[JsonNode] = JacksonWalker
+
+// Encode: Jackson JsonNode → TOON (zero JsonValue intermediate)
 val jacksonNode: JsonNode = objectMapper.readTree(apiResponse)
-val toon: String = JacksonWalker.dispatch(jacksonNode, new StringifyVisitor(indent = 2))
+val toon: String = jacksonNode.toToon(indent = 2)
+val filtered: String = jacksonNode.toToonFiltered(Set("password"), indent = 2)
 
-// Decode TOON directly to Jackson JsonNode without JsonValue
+// Decode: TOON → Jackson JsonNode (zero JsonValue intermediate)
 val factory = JsonNodeFactory.instance
 val jacksonNode: JsonNode = Toon.decode(toonString)
   .map(Dispatch(_, JacksonConstructionVisitor(factory)))

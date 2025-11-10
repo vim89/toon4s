@@ -11,13 +11,13 @@ import io.toonformat.toon4s.{EncodeOptions, JsonValue}
  * Writer without materializing intermediate String buffers'''. For large datasets (Apache Spark
  * style workloads), this can dramatically reduce memory pressure and GC overhead.
  *
- * ==Performance Characteristics==
+ * ==Performance characteristics==
  *   - '''Zero intermediate trees''': Encodes JsonValue directly to Writer
  *   - '''Constant memory''': O(d) space where d is nesting depth
  *   - '''Streaming output''': Data flows to Writer as it's processed
  *   - '''GC friendly''': Minimal allocations per node
  *
- * ==Real-World Use Cases==
+ * ==Real-world use cases==
  *   - '''Apache Spark''': Process millions of rows without OOM
  *   - '''ETL pipelines''': Transform and encode in single pass
  *   - '''API responses''': Stream large responses directly to HTTP output
@@ -96,7 +96,7 @@ object StreamingEncoder {
 /**
  * Streaming visitor that writes directly to a Writer.
  *
- * This is the killer feature: encoding happens as traversal proceeds, with no intermediate String
+ * This is the value-add feature: encoding happens as traversal proceeds, with no intermediate String
  * buffers. For million-row datasets, this saves enormous amounts of memory.
  *
  * @param writer

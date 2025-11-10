@@ -3,9 +3,9 @@ package io.toonformat.toon4s.visitor
 import scala.collection.immutable.VectorMap
 
 /**
- * Zero-overhead tree processing with the Visitor Pattern.
+ * Zero-overhead tree processing with the visitor pattern.
  *
- * The Visitor Pattern enables flexible, streaming, zero-overhead processing of JSON-compatible
+ * The Visitor pattern enables flexible, streaming, zero-overhead processing of JSON-compatible
  * structures by separating traversal logic from computation logic.
  *
  * ==Key benefits==

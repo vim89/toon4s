@@ -7,7 +7,7 @@ import io.toonformat.toon4s.error.{DecodeError, ErrorLocation}
 /**
  * Parse context for error tracking.
  *
- * ==Design: Reader Monad + Error Context Pattern==
+ * ==Design: Reader Monad + Error Context pattern==
  *
  * This case class encapsulates location information that flows through parsing operations, enabling
  * automatic error location tracking without threading location through every function.
@@ -43,7 +43,7 @@ final case class ParseContext(
   /**
    * Execute a block and enrich any DecodeError with this context's location.
    *
-   * ==Error Handling Pattern: Exception Enrichment==
+   * ==Error Handling pattern: Exception Enrichment==
    *
    * If the block throws a DecodeError that doesn't already have location information, this method
    * adds the location from this context.
@@ -85,7 +85,7 @@ final case class ParseContext(
   /**
    * Execute a block and map any DecodeError with location enrichment.
    *
-   * ==Functional Error Handling: Either + Error Enrichment==
+   * ==Functional Error Handling: Either + Error enrichment==
    *
    * Similar to withLocation but returns Either instead of throwing.
    *
@@ -125,7 +125,7 @@ final case class ParseContext(
   /**
    * Create ErrorLocation from this context.
    *
-   * ==Pure Function==
+   * ==Pure function==
    *
    * @return
    *   ErrorLocation with this context's information
@@ -155,7 +155,7 @@ final case class ParseContext(
   /**
    * Create new context from a parsed line.
    *
-   * ==Factory Method Pattern==
+   * ==Factory method pattern==
    *
    * @param newLine
    *   New line number
@@ -174,7 +174,7 @@ object ParseContext {
   /**
    * Create context from a ParsedLine.
    *
-   * ==Factory Method Pattern==
+   * ==Factory method pattern==
    *
    * @param parsedLine
    *   The parsed line to create context from
@@ -198,7 +198,7 @@ object ParseContext {
   /**
    * Create context with line number and content.
    *
-   * ==Convenience Constructor==
+   * ==Convenience constructor==
    *
    * @param line
    *   Line number (1-based)

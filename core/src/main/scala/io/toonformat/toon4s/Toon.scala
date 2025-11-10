@@ -13,7 +13,7 @@ import io.toonformat.toon4s.util.EitherUtils._
  * TOON is a human-readable data serialization format designed for structured data, offering better
  * readability than JSON while maintaining similar expressiveness.
  *
- * ==Basic Usage==
+ * ==Basic usage==
  * {{{
  * import io.toonformat.toon4s._
  * import io.toonformat.toon4s.JsonValue._
@@ -28,7 +28,7 @@ import io.toonformat.toon4s.util.EitherUtils._
  * // Result: Right(JObj(VectorMap("name" -> JString("Alice"), "age" -> JNumber(30))))
  * }}}
  *
- * ==Custom Options==
+ * ==Custom options==
  * {{{
  * // Use tab delimiter
  * val options = EncodeOptions(delimiter = Delimiter.Tab)

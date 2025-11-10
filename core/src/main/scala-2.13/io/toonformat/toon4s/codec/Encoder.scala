@@ -53,7 +53,7 @@ object Encoder {
         case (k, v) => k -> ev.apply(v)
       }))
 
-  // Generic Product (case classes / tuples) using Product API
+  // Generic product (case classes / tuples) using Product API
   implicit def productEncoder[A <: Product]: Encoder[A] = (p: A) => {
     val names = p.productElementNames
     val values = p.productIterator
@@ -66,6 +66,7 @@ object Encoder {
     JObj(VectorMap.from(kvs))
   }
 
+  // TODO: Check feasibility for tailrec
   private def anyToJson(v: Any): JsonValue = v match {
   case null                    => JNull
   case s: String               => JString(s)

@@ -192,6 +192,7 @@ object Encoders {
     }
   }
 
+  // TODO: Check feasibility for tailrec
   private def encodeListItem(
       value: JsonValue,
       writer: EncodeLineWriter,

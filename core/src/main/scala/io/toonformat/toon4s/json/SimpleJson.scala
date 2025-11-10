@@ -21,6 +21,7 @@ object SimpleJson {
     value
   }
 
+  // TODO: Check feasibility for tailrec
   def stringify(value: JsonValue): String = value match {
   case JNull      => "null"
   case JBool(b)   => if (b) "true" else "false"
@@ -37,6 +38,7 @@ object SimpleJson {
       .mkString("{", ",", "}")
   }
 
+  // TODO: Check feasibility for tailrec
   def toScala(value: JsonValue): Any = value match {
   case JNull      => None
   case JBool(b)   => b
@@ -178,6 +180,7 @@ object SimpleJson {
       }
     }
 
+    // TODO: Check feasibility for tailrec
     private def parseArray(input: String, startIndex: Int): (JsonValue, Int) = {
       val afterBracket = expect(input, startIndex, '[')
       val index = skipWhitespace(input, afterBracket)

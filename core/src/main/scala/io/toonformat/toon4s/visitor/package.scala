@@ -118,16 +118,16 @@ package io.toonformat.toon4s
  * ==Design patterns used==
  *
  * This implementation demonstrates multiple Scala design patterns:
- *   - '''Visitor Pattern''': Separates algorithms from data structures
- *   - '''Chain of Responsibility''': Visitors can forward to next in chain
- *   - '''Strategy Pattern''': Different visitors for different processing strategies
- *   - '''Template Method''': Dispatch defines traversal, visitors define operations
- *   - '''Type Classes''': Generic Visitor[T] works with any output type
+ *   - '''Visitor pattern''': Separates algorithms from data structures
+ *   - '''Chain of responsibility''': Visitors can forward to next in chain
+ *   - '''Strategy sattern''': Different visitors for different processing strategies
+ *   - '''Template method''': Dispatch defines traversal, visitors define operations
+ *   - '''Type classes''': Generic Visitor[T] works with any output type
  *
  * ==References==
  *   - Li Haoyi: "Zero-Overhead Tree Processing with the Visitor Pattern"
  *     [[https://www.lihaoyi.com/post/ZeroOverheadTreeProcessingwiththeVisitorPattern.html]]
- *   - Gang of Four: "Design Patterns: Elements of Reusable Object-Oriented Software"
+ *   - Gang of Four: "Design patterns: Elements of reusable object-oriented software"
  *
  * @see
  *   [[Visitor]] for the visitor interface

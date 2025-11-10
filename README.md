@@ -52,6 +52,7 @@ a compact, LLM-friendly data format that blends YAML-style indentation with CSV-
 | **Pure & total** | All encoders/decoders are pure functions; decode returns `Either[DecodeError, JsonValue]`. | Idiomatic FP: easy to compose in Cats/ZIO/FS2; referentially transparent. |
 | **Deterministic ADTs** | `JsonValue` as a sealed ADT with `VectorMap` for objects; stable field ordering. | Exhaustive pattern matching; predictable serialization for testing/debugging. |
 | **Streaming visitors** | `foreachTabular` and nested `foreachArrays` (tail‑recursive, stack-safe). | Validate/process millions of rows without building a full AST; constant memory usage. |
+| **Zero-overhead visitors** | Composable visitor pattern for streaming + transformations in single pass; includes JSON repair for LLM output. | Apache Spark workloads: repair + filter + encode 1M rows with O(d) memory; no intermediate allocations. |
 | **Zero‑dep core** | Core library has zero dependencies beyond Scala stdlib; CLI uses only `scopt` + `jtokkit`. | Tiny footprint (<100KB), simpler audits, no transitive dependency hell. |
 | **Strictness profiles** | `Strict` (spec-compliant) vs `Lenient` (error-tolerant) modes with validation policies. | Safer ingestion of LLM outputs and human-edited data; configurable validation. |
 | **CLI with budgets** | Built-in `--stats` (token counts), `--optimize` (delimiter selection); cross-platform. | Track token savings in CI/CD; pick optimal delimiter for your data shape. |
@@ -644,6 +645,36 @@ sbt jmhFull  # heavy run
 - Reporting: CI also emits JSON (`-rf json -rff /tmp/jmh.json`) and posts a summary table on PRs.
 - Machine baseline (indicative): macOS Apple M‑series (M2/M3), Temurin Java 21, default power settings.
 - Guidance: close heavy apps/IDEs, plug in AC power, warm JVM before measurement. Numbers vary by OS/JVM/data shapes-treat them as relative, not absolute.
+
+### Zero-overhead visitor pattern (v0.2.0+)
+
+For Apache Spark-style workloads processing millions of rows, toon4s provides a **composable visitor pattern** that eliminates intermediate allocations:
+
+```scala
+import io.toonformat.toon4s.visitor._
+
+// Compose: Repair LLM output → Filter sensitive keys → Encode
+val visitor = new JsonRepairVisitor(
+  new FilterKeysVisitor(
+    Set("password", "ssn", "api_key"),
+    new StringifyVisitor(indent = 2)
+  )
+)
+
+// Single pass, zero intermediate trees
+val cleanToon: String = Dispatch(llmJson, visitor)
+```
+
+**Key visitors:**
+- `StringifyVisitor` - Terminal visitor producing TOON strings
+- `ConstructionVisitor` - Terminal visitor reconstructing JsonValue trees
+- `FilterKeysVisitor` - Intermediate visitor removing sensitive fields
+- `JsonRepairVisitor` - Fixes malformed LLM JSON (converts string "true" → JBool, normalizes keys, etc.)
+- `StreamingEncoder` - Streams directly to Writer for large datasets
+
+**Performance:** O(n) time, O(d) space where d = depth. Perfect for processing millions of rows with constant memory.
+
+See: `io.toonformat.toon4s.visitor` package docs and [Li Haoyi's article](https://www.lihaoyi.com/post/ZeroOverheadTreeProcessingwiththeVisitorPattern.html).
 
 ### Streaming visitors
 

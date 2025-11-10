@@ -350,11 +350,40 @@ sequenceDiagram
 
 ---
 
+## Zero-overhead visitor pattern (v0.2.0+)
+
+For **Apache Spark-style workloads** (millions of rows), toon4s provides a **composable visitor pattern** that processes data in a single pass with zero intermediate allocations:
+
+```scala
+import io.toonformat.toon4s.visitor._
+
+// Repair malformed LLM JSON + filter sensitive keys + encode (single pass!)
+val visitor = new JsonRepairVisitor(
+  new FilterKeysVisitor(Set("password", "ssn"),
+    new StringifyVisitor(indent = 2)
+  )
+)
+val result: String = Dispatch(llmJson, visitor)
+```
+
+**Available visitors:**
+- `StringifyVisitor` - Terminal visitor producing TOON strings
+- `ConstructionVisitor` - Terminal visitor rebuilding JsonValue trees
+- `FilterKeysVisitor` - Intermediate visitor removing keys
+- `JsonRepairVisitor` - Fixes LLM output (converts string "true" → JBool, normalizes keys, trims whitespace)
+- `StreamingEncoder` - Streams directly to Writer for gigabyte-scale datasets
+
+**Performance:** O(n) time, O(d) space where d = nesting depth. Process 1M rows with constant memory.
+
+**Implementation reference:** Based on [Li Haoyi's visitor pattern article](https://www.lihaoyi.com/post/ZeroOverheadTreeProcessingwiththeVisitorPattern.html).
+
+---
+
 ## Limitations & edge cases
 
 - **Irregular arrays** degrade to list syntax (less compact).
 - **Binary / large blobs** should be base64 before encoding.
-- **Streaming** not implemented; `Toon.decode` expects whole strings in memory.
+- **Streaming decode**: `Toon.decode` expects whole strings in memory. For large datasets use `Streaming.foreachTabular` or visitor pattern.
 - **Java interop**: `toon4s` exposes only Scala collections. For Java call sites, wrap `Toon.encode`/`decode` with conversion helpers.
 - **Non-scalar map keys** get `toString`'d; prefer `Map[String, _]` or `VectorMap`. 
 

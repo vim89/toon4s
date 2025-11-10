@@ -1,7 +1,8 @@
 package io.toonformat.toon4s.visitor
 
-import io.toonformat.toon4s.{EncodeOptions, JsonValue}
 import java.io.Writer
+
+import io.toonformat.toon4s.{EncodeOptions, JsonValue}
 
 /**
  * High-performance streaming encoder using the Visitor Pattern.
@@ -82,13 +83,14 @@ object StreamingEncoder {
       json: JsonValue,
       writer: Writer,
       options: EncodeOptions,
-      keysToFilter: Set[String]
+      keysToFilter: Set[String],
   ): Unit = {
     val streamingVisitor = new StreamingStringifyVisitor(writer, options.indent)
     val filteringVisitor = new FilterKeysVisitor(keysToFilter, streamingVisitor)
     Dispatch(json, filteringVisitor)
     writer.flush()
   }
+
 }
 
 /**
@@ -144,13 +146,14 @@ final class StreamingStringifyVisitor(writer: Writer, indent: Int = 2) extends V
     s.exists(c => c == '"' || c == ':' || c == '\n' || c == '\r' || c == '\t') ||
     s == "null" || s == "true" || s == "false"
   }
+
 }
 
-/**
- * Streaming ObjectVisitor that writes key-value pairs directly to Writer.
- */
+/** Streaming ObjectVisitor that writes key-value pairs directly to Writer. */
 final class StreamingObjectVisitor(writer: Writer, indent: Int) extends ObjectVisitor[Unit] {
+
   private var lastKey: String = ""
+
   private var first = true
 
   override def visitKey(key: String): Unit = {
@@ -172,4 +175,5 @@ final class StreamingObjectVisitor(writer: Writer, indent: Int) extends ObjectVi
   override def done(): Unit = {
     // Nothing to return - already written to Writer
   }
+
 }

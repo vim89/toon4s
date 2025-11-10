@@ -43,22 +43,26 @@ import scala.collection.immutable.VectorMap
 final class JsonRepairVisitor[T](
     downstream: Visitor[T],
     removeEmpty: Boolean = false,
-    normalizeKeys: Boolean = true
+    normalizeKeys: Boolean = true,
 ) extends Visitor[T] {
 
   override def visitString(value: String): T = {
     // Repair common string issues
     val repaired = value match {
-      case "null" | "NULL" | "Null" => return downstream.visitNull()
-      case "true" | "TRUE" | "True" => return downstream.visitBool(true)
-      case "false" | "FALSE" | "False" => return downstream.visitBool(false)
-      case s if s.trim.isEmpty && removeEmpty => ""
-      case s => s.trim
+    case "null" | "NULL" | "Null"           => return downstream.visitNull()
+    case "true" | "TRUE" | "True"           => return downstream.visitBool(true)
+    case "false" | "FALSE" | "False"        => return downstream.visitBool(false)
+    case s if s.trim.isEmpty && removeEmpty => ""
+    case s                                  => s.trim
     }
 
     // Try parsing as number if it looks numeric
     try {
-      if (repaired.nonEmpty && repaired.forall(c => c.isDigit || c == '.' || c == '-' || c == '+' || c == 'e' || c == 'E')) {
+      if (
+          repaired.nonEmpty && repaired.forall(c =>
+            c.isDigit || c == '.' || c == '-' || c == '+' || c == 'e' || c == 'E'
+          )
+      ) {
         return downstream.visitNumber(BigDecimal(repaired))
       }
     } catch {
@@ -87,17 +91,18 @@ final class JsonRepairVisitor[T](
   override def visitObject(): ObjectVisitor[T] = {
     new JsonRepairObjectVisitor(downstream.visitObject(), normalizeKeys, removeEmpty)
   }
+
 }
 
-/**
- * ObjectVisitor for repairing object key-value pairs.
- */
+/** ObjectVisitor for repairing object key-value pairs. */
 final class JsonRepairObjectVisitor[T](
     downstream: ObjectVisitor[T],
     normalizeKeys: Boolean,
-    removeEmpty: Boolean
+    removeEmpty: Boolean,
 ) extends ObjectVisitor[T] {
+
   private var lastKey: String = ""
+
   private var shouldSkip: Boolean = false
 
   override def visitKey(key: String): Unit = {
@@ -135,4 +140,5 @@ final class JsonRepairObjectVisitor[T](
   }
 
   override def done(): T = downstream.done()
+
 }

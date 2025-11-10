@@ -1,9 +1,11 @@
 package io.toonformat.toon4s.visitor
 
+import java.io.StringWriter
+
+import scala.collection.immutable.VectorMap
+
 import io.toonformat.toon4s.{EncodeOptions, JsonValue}
 import io.toonformat.toon4s.JsonValue._
-import java.io.StringWriter
-import scala.collection.immutable.VectorMap
 
 class StreamingVisitorSpec extends munit.FunSuite {
 
@@ -19,7 +21,7 @@ class StreamingVisitorSpec extends munit.FunSuite {
   test("StreamingEncoder - encodes object to Writer") {
     val json = JObj(VectorMap(
       "name" -> JString("Alice"),
-      "age" -> JNumber(30)
+      "age" -> JNumber(30),
     ))
     val writer = new StringWriter()
     StreamingEncoder.encodeTo(json, writer, EncodeOptions(indent = 2))
@@ -32,14 +34,14 @@ class StreamingVisitorSpec extends munit.FunSuite {
     val json = JObj(VectorMap(
       "username" -> JString("alice"),
       "password" -> JString("secret123"),
-      "email" -> JString("alice@example.com")
+      "email" -> JString("alice@example.com"),
     ))
     val writer = new StringWriter()
     StreamingEncoder.encodeFiltered(
       json,
       writer,
       EncodeOptions(indent = 2),
-      Set("password")
+      Set("password"),
     )
     val result = writer.toString
     // Output structure differs from non-streaming due to visitor write ordering
@@ -50,7 +52,7 @@ class StreamingVisitorSpec extends munit.FunSuite {
     val json = JObj(VectorMap(
       "user" -> JObj(VectorMap(
         "id" -> JNumber(1),
-        "name" -> JString("Bob")
+        "name" -> JString("Bob"),
       ))
     ))
     val writer = new StringWriter()
@@ -115,7 +117,7 @@ class StreamingVisitorSpec extends munit.FunSuite {
     val json = JObj(VectorMap(
       "user name" -> JString("Alice"),
       "123id" -> JNumber(1),
-      "valid_key" -> JString("test")
+      "valid_key" -> JString("test"),
     ))
     val visitor = new JsonRepairVisitor(new ConstructionVisitor(), normalizeKeys = true)
     val result = Dispatch(json, visitor).asInstanceOf[JObj]
@@ -128,7 +130,7 @@ class StreamingVisitorSpec extends munit.FunSuite {
     val json = JArray(Vector(
       JString("valid"),
       JString("  "),
-      JString("also_valid")
+      JString("also_valid"),
     ))
     val visitor = new JsonRepairVisitor(new ConstructionVisitor(), removeEmpty = false)
     val result = Dispatch(json, visitor).asInstanceOf[JArray]
@@ -141,12 +143,10 @@ class StreamingVisitorSpec extends munit.FunSuite {
     val inputs = Vector(
       JString("null"),
       JString("NULL"),
-      JString("Null")
+      JString("Null"),
     )
     val visitor = new JsonRepairVisitor(new ConstructionVisitor())
-    inputs.foreach { json =>
-      assertEquals(Dispatch(json, visitor), JNull)
-    }
+    inputs.foreach(json => assertEquals(Dispatch(json, visitor), JNull))
   }
 
   test("JsonRepairVisitor - case insensitive boolean variants") {
@@ -155,13 +155,9 @@ class StreamingVisitorSpec extends munit.FunSuite {
 
     val visitor = new JsonRepairVisitor(new ConstructionVisitor())
 
-    trueInputs.foreach { json =>
-      assertEquals(Dispatch(json, visitor), JBool(true))
-    }
+    trueInputs.foreach(json => assertEquals(Dispatch(json, visitor), JBool(true)))
 
-    falseInputs.foreach { json =>
-      assertEquals(Dispatch(json, visitor), JBool(false))
-    }
+    falseInputs.foreach(json => assertEquals(Dispatch(json, visitor), JBool(false)))
   }
 
   test("JsonRepairVisitor - preserves already correct values") {
@@ -169,7 +165,7 @@ class StreamingVisitorSpec extends munit.FunSuite {
       "num" -> JNumber(42),
       "bool" -> JBool(true),
       "null" -> JNull,
-      "str" -> JString("valid")
+      "str" -> JString("valid"),
     ))
     val visitor = new JsonRepairVisitor(new ConstructionVisitor())
     val result = Dispatch(json, visitor)
@@ -180,7 +176,7 @@ class StreamingVisitorSpec extends munit.FunSuite {
     val json = JObj(VectorMap(
       "user" -> JObj(VectorMap(
         "is active" -> JString("true"),
-        "user id" -> JString("123")
+        "user id" -> JString("123"),
       ))
     ))
     val visitor = new JsonRepairVisitor(new ConstructionVisitor(), normalizeKeys = true)
@@ -198,7 +194,7 @@ class StreamingVisitorSpec extends munit.FunSuite {
     ))
     val visitor = new JsonRepairVisitor(
       new StringifyVisitor(indent = 2),
-      normalizeKeys = true
+      normalizeKeys = true,
     )
     val result = Dispatch(json, visitor)
     assert(result.contains("valid_key: 42"))
@@ -207,14 +203,14 @@ class StreamingVisitorSpec extends munit.FunSuite {
   test("JsonRepairVisitor - chains with FilterKeysVisitor") {
     val json = JObj(VectorMap(
       "user name" -> JString("Alice"),
-      "password" -> JString("secret")
+      "password" -> JString("secret"),
     ))
     val visitor = new JsonRepairVisitor(
       new FilterKeysVisitor(
         Set("password"),
-        new ConstructionVisitor()
+        new ConstructionVisitor(),
       ),
-      normalizeKeys = true
+      normalizeKeys = true,
     )
     val result = Dispatch(json, visitor).asInstanceOf[JObj]
     assert(result.value.contains("user_name"))
@@ -230,16 +226,16 @@ class StreamingVisitorSpec extends munit.FunSuite {
       "is active" -> JString("true"),
       "user id" -> JString("123"),
       "internal token" -> JString("secret-token"),
-      "email" -> JString("  alice@example.com  ")
+      "email" -> JString("  alice@example.com  "),
     ))
 
     // Compose: Repair → Filter → Stringify
     val visitor = new JsonRepairVisitor(
       new FilterKeysVisitor(
         Set("internal_token"), // Note: key gets normalized before filtering
-        new StringifyVisitor(indent = 2)
+        new StringifyVisitor(indent = 2),
       ),
-      normalizeKeys = true
+      normalizeKeys = true,
     )
 
     val result = Dispatch(llmOutput, visitor)
@@ -257,7 +253,7 @@ class StreamingVisitorSpec extends munit.FunSuite {
       "timestamp" -> JString("1234567890"),
       "user_id" -> JString("42"),
       "is_valid" -> JString("true"),
-      "sensitive_data" -> JString("redacted")
+      "sensitive_data" -> JString("redacted"),
     ))
 
     val filterVisitor = new FilterKeysVisitor(Set("sensitive_data"), new ConstructionVisitor())
@@ -271,4 +267,5 @@ class StreamingVisitorSpec extends munit.FunSuite {
     assertEquals(result.value("is_valid"), JBool(true))
     assert(!result.value.contains("sensitive_data"))
   }
+
 }

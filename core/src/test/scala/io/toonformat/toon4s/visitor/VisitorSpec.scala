@@ -1,8 +1,9 @@
 package io.toonformat.toon4s.visitor
 
+import scala.collection.immutable.VectorMap
+
 import io.toonformat.toon4s.JsonValue
 import io.toonformat.toon4s.JsonValue._
-import scala.collection.immutable.VectorMap
 
 class VisitorSpec extends munit.FunSuite {
 
@@ -60,7 +61,7 @@ class VisitorSpec extends munit.FunSuite {
   test("Dispatch - nested array") {
     val json = JArray(Vector(
       JArray(Vector(JNumber(1), JNumber(2))),
-      JArray(Vector(JNumber(3), JNumber(4)))
+      JArray(Vector(JNumber(3), JNumber(4))),
     ))
     val visitor = new ConstructionVisitor()
     val result = Dispatch(json, visitor)
@@ -77,7 +78,7 @@ class VisitorSpec extends munit.FunSuite {
   test("Dispatch - simple object") {
     val json = JObj(VectorMap(
       "name" -> JString("Alice"),
-      "age" -> JNumber(30)
+      "age" -> JNumber(30),
     ))
     val visitor = new ConstructionVisitor()
     val result = Dispatch(json, visitor)
@@ -88,7 +89,7 @@ class VisitorSpec extends munit.FunSuite {
     val json = JObj(VectorMap(
       "user" -> JObj(VectorMap(
         "name" -> JString("Bob"),
-        "active" -> JBool(true)
+        "active" -> JBool(true),
       ))
     ))
     val visitor = new ConstructionVisitor()
@@ -100,12 +101,12 @@ class VisitorSpec extends munit.FunSuite {
     val json = JObj(VectorMap(
       "users" -> JArray(Vector(
         JObj(VectorMap("id" -> JNumber(1), "name" -> JString("Alice"))),
-        JObj(VectorMap("id" -> JNumber(2), "name" -> JString("Bob")))
+        JObj(VectorMap("id" -> JNumber(2), "name" -> JString("Bob"))),
       )),
       "metadata" -> JObj(VectorMap(
         "count" -> JNumber(2),
-        "status" -> JString("active")
-      ))
+        "status" -> JString("active"),
+      )),
     ))
     val visitor = new ConstructionVisitor()
     val result = Dispatch(json, visitor)
@@ -116,7 +117,7 @@ class VisitorSpec extends munit.FunSuite {
     val json = JObj(VectorMap(
       "z" -> JNumber(3),
       "a" -> JNumber(1),
-      "m" -> JNumber(2)
+      "m" -> JNumber(2),
     ))
     val visitor = new ConstructionVisitor()
     val result = Dispatch(json, visitor)
@@ -234,7 +235,7 @@ class VisitorSpec extends munit.FunSuite {
   test("StringifyVisitor - list array with complex elements") {
     val json = JArray(Vector(
       JObj(VectorMap("id" -> JNumber(1))),
-      JObj(VectorMap("id" -> JNumber(2)))
+      JObj(VectorMap("id" -> JNumber(2))),
     ))
     val visitor = new StringifyVisitor(indent = 2)
     val result = Dispatch(json, visitor)
@@ -245,7 +246,7 @@ class VisitorSpec extends munit.FunSuite {
   test("StringifyVisitor - simple object") {
     val json = JObj(VectorMap(
       "name" -> JString("Alice"),
-      "age" -> JNumber(30)
+      "age" -> JNumber(30),
     ))
     val visitor = new StringifyVisitor(indent = 2)
     val result = Dispatch(json, visitor)
@@ -278,12 +279,10 @@ class VisitorSpec extends munit.FunSuite {
       JNumber(42),
       JBool(true),
       JBool(false),
-      JNull
+      JNull,
     )
     val visitor = new ConstructionVisitor()
-    inputs.foreach { json =>
-      assertEquals(Dispatch(json, visitor), json)
-    }
+    inputs.foreach(json => assertEquals(Dispatch(json, visitor), json))
   }
 
   test("ConstructionVisitor - preserves array element order") {
@@ -297,7 +296,7 @@ class VisitorSpec extends munit.FunSuite {
     val json = JObj(VectorMap(
       "c" -> JNumber(3),
       "a" -> JNumber(1),
-      "b" -> JNumber(2)
+      "b" -> JNumber(2),
     ))
     val visitor = new ConstructionVisitor()
     val result = Dispatch(json, visitor)
@@ -322,11 +321,11 @@ class VisitorSpec extends munit.FunSuite {
   test("FilterKeysVisitor - removes specified key") {
     val json = JObj(VectorMap(
       "public" -> JString("visible"),
-      "private" -> JString("hidden")
+      "private" -> JString("hidden"),
     ))
     val visitor = new FilterKeysVisitor(
       Set("private"),
-      new ConstructionVisitor()
+      new ConstructionVisitor(),
     )
     val result = Dispatch(json, visitor)
     val expected = JObj(VectorMap("public" -> JString("visible")))
@@ -338,11 +337,11 @@ class VisitorSpec extends munit.FunSuite {
       "name" -> JString("Alice"),
       "password" -> JString("secret"),
       "ssn" -> JString("123-45-6789"),
-      "email" -> JString("alice@example.com")
+      "email" -> JString("alice@example.com"),
     ))
     val visitor = new FilterKeysVisitor(
       Set("password", "ssn"),
-      new ConstructionVisitor()
+      new ConstructionVisitor(),
     )
     val result = Dispatch(json, visitor).asInstanceOf[JObj]
     assert(!result.value.contains("password"))
@@ -354,11 +353,11 @@ class VisitorSpec extends munit.FunSuite {
   test("FilterKeysVisitor - no keys removed if none match") {
     val json = JObj(VectorMap(
       "a" -> JNumber(1),
-      "b" -> JNumber(2)
+      "b" -> JNumber(2),
     ))
     val visitor = new FilterKeysVisitor(
       Set("c", "d"),
-      new ConstructionVisitor()
+      new ConstructionVisitor(),
     )
     val result = Dispatch(json, visitor)
     assertEquals(result, json)
@@ -367,11 +366,11 @@ class VisitorSpec extends munit.FunSuite {
   test("FilterKeysVisitor - removes all keys when all match") {
     val json = JObj(VectorMap(
       "a" -> JNumber(1),
-      "b" -> JNumber(2)
+      "b" -> JNumber(2),
     ))
     val visitor = new FilterKeysVisitor(
       Set("a", "b"),
-      new ConstructionVisitor()
+      new ConstructionVisitor(),
     )
     val result = Dispatch(json, visitor)
     assertEquals(result, JObj(VectorMap.empty))
@@ -381,12 +380,12 @@ class VisitorSpec extends munit.FunSuite {
     val json = JObj(VectorMap(
       "user" -> JObj(VectorMap(
         "name" -> JString("Bob"),
-        "password" -> JString("secret")
+        "password" -> JString("secret"),
       ))
     ))
     val visitor = new FilterKeysVisitor(
       Set("password"),
-      new ConstructionVisitor()
+      new ConstructionVisitor(),
     )
     val result = Dispatch(json, visitor)
     val expected = JObj(VectorMap(
@@ -398,11 +397,11 @@ class VisitorSpec extends munit.FunSuite {
   test("FilterKeysVisitor - filters in arrays of objects") {
     val json = JArray(Vector(
       JObj(VectorMap("id" -> JNumber(1), "secret" -> JString("a"))),
-      JObj(VectorMap("id" -> JNumber(2), "secret" -> JString("b")))
+      JObj(VectorMap("id" -> JNumber(2), "secret" -> JString("b"))),
     ))
     val visitor = new FilterKeysVisitor(
       Set("secret"),
-      new ConstructionVisitor()
+      new ConstructionVisitor(),
     )
     val result = Dispatch(json, visitor).asInstanceOf[JArray]
     result.value.foreach { elem =>
@@ -417,22 +416,20 @@ class VisitorSpec extends munit.FunSuite {
       JString("test"),
       JNumber(42),
       JBool(true),
-      JNull
+      JNull,
     )
     val visitor = new FilterKeysVisitor(
       Set("any"),
-      new ConstructionVisitor()
+      new ConstructionVisitor(),
     )
-    primitives.foreach { json =>
-      assertEquals(Dispatch(json, visitor), json)
-    }
+    primitives.foreach(json => assertEquals(Dispatch(json, visitor), json))
   }
 
   test("FilterKeysVisitor - preserves empty objects") {
     val json = JObj(VectorMap.empty)
     val visitor = new FilterKeysVisitor(
       Set("any"),
-      new ConstructionVisitor()
+      new ConstructionVisitor(),
     )
     val result = Dispatch(json, visitor)
     assertEquals(result, json)
@@ -441,11 +438,11 @@ class VisitorSpec extends munit.FunSuite {
   test("FilterKeysVisitor - chain with StringifyVisitor") {
     val json = JObj(VectorMap(
       "name" -> JString("Alice"),
-      "password" -> JString("secret")
+      "password" -> JString("secret"),
     ))
     val visitor = new FilterKeysVisitor(
       Set("password"),
-      new StringifyVisitor(indent = 2)
+      new StringifyVisitor(indent = 2),
     )
     val result = Dispatch(json, visitor)
     assert(result.contains("name: Alice"))
@@ -459,7 +456,7 @@ class VisitorSpec extends munit.FunSuite {
     val json = JObj(VectorMap("a" -> JNumber(1), "b" -> JNumber(2)))
     val visitor = new FilterKeysVisitor(
       Set("b"),
-      new ConstructionVisitor()
+      new ConstructionVisitor(),
     )
     val result = Dispatch(json, visitor)
     assert(result.isInstanceOf[JObj])
@@ -469,7 +466,7 @@ class VisitorSpec extends munit.FunSuite {
     val json = JObj(VectorMap("a" -> JNumber(1)))
     val visitor = new FilterKeysVisitor(
       Set.empty,
-      new StringifyVisitor(indent = 2)
+      new StringifyVisitor(indent = 2),
     )
     val result = Dispatch(json, visitor)
     assert(result.isInstanceOf[String])
@@ -479,15 +476,15 @@ class VisitorSpec extends munit.FunSuite {
     val json = JObj(VectorMap(
       "a" -> JNumber(1),
       "b" -> JNumber(2),
-      "c" -> JNumber(3)
+      "c" -> JNumber(3),
     ))
     // Filter out "b", then filter out "a"
     val visitor1 = new FilterKeysVisitor(
       Set("b"),
       new FilterKeysVisitor(
         Set("a"),
-        new ConstructionVisitor()
-      )
+        new ConstructionVisitor(),
+      ),
     )
     val result = Dispatch(json, visitor1).asInstanceOf[JObj]
     assertEquals(result.value.size, 1)
@@ -514,7 +511,7 @@ class VisitorSpec extends munit.FunSuite {
       JBool(true),
       JNull,
       JArray(Vector(JNumber(1))),
-      JObj(VectorMap("key" -> JString("value")))
+      JObj(VectorMap("key" -> JString("value"))),
     ))
     val visitor = new ConstructionVisitor()
     val result = Dispatch(json, visitor)
@@ -558,4 +555,5 @@ class VisitorSpec extends munit.FunSuite {
     val result2 = dispatch(json, visitor)
     assertEquals(result1, result2)
   }
+
 }

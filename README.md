@@ -17,7 +17,7 @@ a compact, LLM-friendly data format that blends YAML-style indentation with CSV-
 - **Type safety first**: sealed ADTs, exhaustive pattern matching, zero unsafe casts, VectorMap for deterministic ordering
 - **Stack-safe by design**: @tailrec-verified functions, constant stack usage, handles arbitrarily deep structures
 - **Modern JVM ready**: Virtual thread compatible (no ThreadLocal), streaming optimized, zero dependencies (491KB core JAR)
-- **Production hardened**: 380+ passing tests, property-based testing, Either-based error handling, security limits
+- **Production hardened**: 480+ passing tests, property-based testing, Either-based error handling, security limits
 - **Railway-oriented programming**: For-comprehension error handling, no exceptions in happy paths, composable with Cats/ZIO/FS2
 
 > **Example**: `{ "tags": ["jazz","chill","lofi"] }` → `tags[3]: jazz,chill,lofi` (40-60% token savings)
@@ -46,19 +46,19 @@ a compact, LLM-friendly data format that blends YAML-style indentation with CSV-
 
 ## Key features & Scala-first benefits
 
-| Theme | What you get | Why it matters on the JVM |
-| ----- | ------------ | ------------------------- |
-| **Spec‑complete** | Full conformance with TOON v1.4 spec; parity with `toon` (TS) and `JToon` (Java). | Mixed stacks behave the same; token math is consistent across platforms. |
-| **Typed APIs (2 & 3)** | Scala 3 derivation for `Encoder`/`Decoder`; Scala 2.13 typeclasses via `ToonTyped`. | Compile‑time guarantees, no `Any`; safer refactors and zero-cost abstractions. |
-| **Pure & total** | All encoders/decoders are pure functions; decode returns `Either[DecodeError, JsonValue]`. | Idiomatic FP: easy to compose in Cats/ZIO/FS2; referentially transparent. |
-| **Deterministic ADTs** | `JsonValue` as a sealed ADT with `VectorMap` for objects; stable field ordering. | Exhaustive pattern matching; predictable serialization for testing/debugging. |
-| **Streaming visitors** | `foreachTabular` and nested `foreachArrays` (tail‑recursive, stack-safe). | Validate/process millions of rows without building a full AST; constant memory usage. |
+| Theme | What you get                                                                                                                                                                 | Why it matters on the JVM |
+| ----- |------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------- |
+| **Spec‑complete** | Full conformance with TOON v1.4 spec; parity with `toon` (TS) and `JToon` (Java).                                                                                            | Mixed stacks behave the same; token math is consistent across platforms. |
+| **Typed APIs (2 & 3)** | Scala 3 derivation for `Encoder`/`Decoder`; Scala 2.13 typeclasses via `ToonTyped`.                                                                                          | Compile‑time guarantees, no `Any`; safer refactors and zero-cost abstractions. |
+| **Pure & total** | All encoders/decoders are pure functions; decode returns `Either[DecodeError, JsonValue]`.                                                                                   | Idiomatic FP: easy to compose in Cats/ZIO/FS2; referentially transparent. |
+| **Deterministic ADTs** | `JsonValue` as a sealed ADT with `VectorMap` for objects; stable field ordering.                                                                                             | Exhaustive pattern matching; predictable serialization for testing/debugging. |
+| **Streaming visitors** | `foreachTabular` and nested `foreachArrays` (tail‑recursive, stack-safe).                                                                                                    | Validate/process millions of rows without building a full AST; constant memory usage. |
 | **Zero-overhead visitors** | Composable visitor pattern for streaming + transformations in single pass; includes JSON repair for LLM output. Universal `TreeWalker` adapters for Jackson/Circe/Play JSON. | Apache Spark workloads: repair + filter + encode 1M rows with O(d) memory; encode Jackson JsonNode→TOON or decode TOON→JsonNode without `JsonValue` intermediate. |
-| **Zero‑dep core** | Core library has zero dependencies beyond Scala stdlib; CLI uses only `scopt` + `jtokkit`. | Tiny footprint (<100KB), simpler audits, no transitive dependency hell. |
-| **Strictness profiles** | `Strict` (spec-compliant) vs `Lenient` (error-tolerant) modes with validation policies. | Safer ingestion of LLM outputs and human-edited data; configurable validation. |
-| **CLI with budgets** | Built-in `--stats` (token counts), `--optimize` (delimiter selection); cross-platform. | Track token savings in CI/CD; pick optimal delimiter for your data shape. |
-| **Virtual thread ready** | No ThreadLocal usage; compatible with Java 21+ Project Loom virtual threads. | Future-proof for modern JVM concurrency; scales to millions of concurrent tasks. |
-| **Production hardened** | 381 passing tests; property-based testing; strict mode validation; security limits. | Battle-tested edge cases; prevents DoS via depth/length limits; safe for production. |
+| **Zero‑dep core** | Core library has zero dependencies beyond Scala stdlib; CLI uses only `scopt` + `jtokkit`.                                                                                   | Tiny footprint (<100KB), simpler audits, no transitive dependency hell. |
+| **Strictness profiles** | `Strict` (spec-compliant) vs `Lenient` (error-tolerant) modes with validation policies.                                                                                      | Safer ingestion of LLM outputs and human-edited data; configurable validation. |
+| **CLI with budgets** | Built-in `--stats` (token counts), `--optimize` (delimiter selection); cross-platform.                                                                                       | Track token savings in CI/CD; pick optimal delimiter for your data shape. |
+| **Virtual thread ready** | No ThreadLocal usage; compatible with Java 21+ Project Loom virtual threads.                                                                                                 | Future-proof for modern JVM concurrency; scales to millions of concurrent tasks. |
+| **Production hardened** | 480+ passing tests; property-based testing; strict mode validation; security limits.                                                                                         | Battle-tested edge cases; prevents DoS via depth/length limits; safe for production. |
 
 ---
 
@@ -158,7 +158,7 @@ xs.foldLeft[Either[DecodeError, List[A]]](Right(Nil)) {
 | Metric | Value                    | Meaning |
 |--------|--------------------------|---------|
 | **Production code** | 5,887 lines (56 files)   | Well-organized, modular |
-| **Test coverage** | 470+ tests, 100% passing  | Comprehensive validation |
+| **Test coverage** | 480+ tests, 100% passing | Comprehensive validation |
 | **Tail-recursive fns** | With `@tailrec`          | Stack-safe, verified |
 | **Sealed ADTs** | traits/classes           | Exhaustive matching |
 | **VectorMap usage** | 32+ occurrences          | Deterministic ordering |

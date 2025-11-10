@@ -3,10 +3,10 @@ package io.toonformat.toon4s
 /**
  * Zero-overhead tree processing with the Visitor Pattern.
  *
- * This package implements the Visitor Pattern for flexible, composable, zero-overhead processing
- * of JSON-compatible structures, as described in Li Haoyi's article "Zero-Overhead Tree Processing
- * with the Visitor Pattern".
- * Link: Reference: https://www.lihaoyi.com/post/ZeroOverheadTreeProcessingwiththeVisitorPattern.html
+ * This package implements the Visitor Pattern for flexible, composable, zero-overhead processing of
+ * JSON-compatible structures, as described in Li Haoyi's article "Zero-Overhead Tree Processing
+ * with the Visitor Pattern". Link: Reference:
+ * https://www.lihaoyi.com/post/ZeroOverheadTreeProcessingwiththeVisitorPattern.html
  *
  * ==Overview==
  *
@@ -161,4 +161,5 @@ package object visitor {
    *   }}}
    */
   def dispatch[T](input: JsonValue, visitor: Visitor[T]): T = Dispatch(input, visitor)
+
 }

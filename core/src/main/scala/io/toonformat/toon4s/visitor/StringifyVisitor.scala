@@ -139,6 +139,7 @@ final class StringifyVisitor(indent: Int = 2) extends Visitor[String] {
    *
    * Strings need quotes if they contain:
    *   - Leading/trailing whitespace
+   *   - Internal whitespace (spaces between words)
    *   - Special characters (quotes, colons, newlines, etc.)
    *   - Are reserved keywords (null, true, false)
    *
@@ -150,6 +151,7 @@ final class StringifyVisitor(indent: Int = 2) extends Visitor[String] {
   private def needsQuoting(s: String): Boolean = {
     s.isEmpty ||
     s != s.trim ||
+    s.contains(' ') ||
     s.exists(c => c == '"' || c == ':' || c == '\n' || c == '\r' || c == '\t') ||
     s == "null" || s == "true" || s == "false"
   }
@@ -167,6 +169,7 @@ final class StringifyVisitor(indent: Int = 2) extends Visitor[String] {
   private def isSimplePrimitive(value: String): Boolean = {
     !value.contains('\n') && !value.startsWith("arr[") && !value.contains(": ")
   }
+
 }
 
 /**
@@ -178,8 +181,11 @@ final class StringifyVisitor(indent: Int = 2) extends Visitor[String] {
  *   Number of spaces for indentation
  */
 final class StringifyObjectVisitor(indent: Int) extends ObjectVisitor[String] {
+
   private val buffer = new StringBuilder()
+
   private var lastKey: String = ""
+
   private var first = true
 
   /**
@@ -233,4 +239,5 @@ final class StringifyObjectVisitor(indent: Int) extends ObjectVisitor[String] {
    *   The complete object as a string
    */
   override def done(): String = buffer.toString
+
 }

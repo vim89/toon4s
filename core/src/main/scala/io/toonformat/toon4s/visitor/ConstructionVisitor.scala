@@ -1,8 +1,9 @@
 package io.toonformat.toon4s.visitor
 
+import scala.collection.immutable.VectorMap
+
 import io.toonformat.toon4s.JsonValue
 import io.toonformat.toon4s.JsonValue._
-import scala.collection.immutable.VectorMap
 
 /**
  * Terminal visitor that reconstructs JsonValue trees.
@@ -36,11 +37,11 @@ import scala.collection.immutable.VectorMap
  *   - '''Allocations''': Same as original tree (case class instances)
  *
  * ==Zero-overhead insight==
- * While ConstructionVisitor allocates the same as the original tree, chaining it with
- * intermediate visitors avoids multiple intermediate trees:
+ * While ConstructionVisitor allocates the same as the original tree, chaining it with intermediate
+ * visitors avoids multiple intermediate trees:
  *   - '''Without visitors''': `filter(transform(normalize(tree)))` creates 3 intermediate trees
- *   - '''With visitors''': `new Filter(new Transform(new Normalize(new Construction())))`
- *     creates 1 final tree
+ *   - '''With visitors''': `new Filter(new Transform(new Normalize(new Construction())))` creates 1
+ *     final tree
  *
  * @see
  *   [[Visitor]] for the visitor pattern interface
@@ -106,6 +107,7 @@ final class ConstructionVisitor extends Visitor[JsonValue] {
    *   An ObjectVisitor that accumulates key-value pairs
    */
   override def visitObject(): ObjectVisitor[JsonValue] = new ConstructionObjectVisitor()
+
 }
 
 /**
@@ -114,7 +116,9 @@ final class ConstructionVisitor extends Visitor[JsonValue] {
  * Accumulates key-value pairs into a VectorMap and produces a JObj.
  */
 final class ConstructionObjectVisitor extends ObjectVisitor[JsonValue] {
+
   private val builder = VectorMap.newBuilder[String, JsonValue]
+
   private var lastKey: String = ""
 
   /**
@@ -158,4 +162,5 @@ final class ConstructionObjectVisitor extends ObjectVisitor[JsonValue] {
    *   A JObj containing all accumulated key-value pairs
    */
   override def done(): JsonValue = JObj(builder.result())
+
 }

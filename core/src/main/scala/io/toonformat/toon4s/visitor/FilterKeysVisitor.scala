@@ -4,12 +4,11 @@ package io.toonformat.toon4s.visitor
  * Intermediate visitor that filters out specified keys from objects.
  *
  * This is an '''intermediate visitor''' - it transforms data and forwards to a downstream visitor
- * rather than producing final output. FilterKeysVisitor demonstrates composable transformations
- * by removing sensitive or unwanted fields during traversal.
+ * rather than producing final output. FilterKeysVisitor demonstrates composable transformations by
+ * removing sensitive or unwanted fields during traversal.
  *
  * ==Key features==
- *   - '''Zero intermediate trees''': Filters during traversal without creating temporary
- *     structures
+ *   - '''Zero intermediate trees''': Filters during traversal without creating temporary structures
  *   - '''Composable''': Can be chained with other visitors
  *   - '''Type-safe''': Generic type T matches downstream visitor
  *   - '''Streaming''': Processes data as it arrives
@@ -77,7 +76,7 @@ package io.toonformat.toon4s.visitor
  */
 final class FilterKeysVisitor[T](
     keysToRemove: Set[String],
-    downstream: Visitor[T]
+    downstream: Visitor[T],
 ) extends Visitor[T] {
 
   /**
@@ -150,6 +149,7 @@ final class FilterKeysVisitor[T](
   override def visitObject(): ObjectVisitor[T] = {
     new FilterKeysObjectVisitor(keysToRemove, downstream.visitObject())
   }
+
 }
 
 /**
@@ -166,9 +166,11 @@ final class FilterKeysVisitor[T](
  */
 final class FilterKeysObjectVisitor[T](
     keysToRemove: Set[String],
-    downstream: ObjectVisitor[T]
+    downstream: ObjectVisitor[T],
 ) extends ObjectVisitor[T] {
+
   private var lastKey: String = ""
+
   private var skipCurrent: Boolean = false
 
   /**
@@ -232,4 +234,5 @@ final class FilterKeysObjectVisitor[T](
    *   The final result from downstream
    */
   override def done(): T = downstream.done()
+
 }

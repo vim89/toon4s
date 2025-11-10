@@ -117,6 +117,7 @@ abstract class Visitor[T] {
    *   An ObjectVisitor[T] for processing object fields
    */
   def visitObject(): ObjectVisitor[T]
+
 }
 
 /**
@@ -161,8 +162,8 @@ abstract class ObjectVisitor[T] {
   /**
    * Get a visitor for processing the next value.
    *
-   * Called after visitKey and before processing the value. Returns a Visitor[T] that will be
-   * passed to the dispatcher for recursive traversal.
+   * Called after visitKey and before processing the value. Returns a Visitor[T] that will be passed
+   * to the dispatcher for recursive traversal.
    *
    * @return
    *   A Visitor[T] for processing the value
@@ -189,4 +190,5 @@ abstract class ObjectVisitor[T] {
    *   The final result of visiting this object
    */
   def done(): T
+
 }

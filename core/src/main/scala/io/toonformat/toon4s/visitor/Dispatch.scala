@@ -6,8 +6,8 @@ import io.toonformat.toon4s.JsonValue._
 /**
  * Universal dispatcher for zero-overhead tree traversal with the Visitor Pattern.
  *
- * The Dispatch object provides a single generic function that traverses any JsonValue structure
- * and calls the appropriate visitor methods. This separates tree traversal logic from computation
+ * The Dispatch object provides a single generic function that traverses any JsonValue structure and
+ * calls the appropriate visitor methods. This separates tree traversal logic from computation
  * logic, enabling flexible composition without intermediate data structures.
  *
  * ==Key properties==
@@ -104,27 +104,29 @@ object Dispatch {
    */
   def apply[T](input: JsonValue, visitor: Visitor[T]): T = {
     input match {
-      // Primitive values - direct delegation to visitor
-      case JString(value)  => visitor.visitString(value)
-      case JNumber(value)  => visitor.visitNumber(value)
-      case JBool(value)    => visitor.visitBool(value)
-      case JNull           => visitor.visitNull()
+    // Primitive values - direct delegation to visitor
+    case JString(value) => visitor.visitString(value)
+    case JNumber(value) => visitor.visitNumber(value)
+    case JBool(value)   => visitor.visitBool(value)
+    case JNull          => visitor.visitNull()
 
-      // Array - recursively dispatch elements, then visit array
-      case JArray(elements) =>
-        val results = elements.map(elem => apply(elem, visitor))
-        visitor.visitArray(results)
+    // Array - recursively dispatch elements, then visit array
+    case JArray(elements) =>
+      val results = elements.map(elem => apply(elem, visitor))
+      visitor.visitArray(results)
 
-      // Object - use ObjectVisitor lifecycle
-      case JObj(fields) =>
-        val objVisitor = visitor.visitObject()
-        fields.foreach { case (key, value) =>
+    // Object - use ObjectVisitor lifecycle
+    case JObj(fields) =>
+      val objVisitor = visitor.visitObject()
+      fields.foreach {
+        case (key, value) =>
           objVisitor.visitKey(key)
           val valueVisitor = objVisitor.visitValue()
           val result = apply(value, valueVisitor)
           objVisitor.visitValue(result)
-        }
-        objVisitor.done()
+      }
+      objVisitor.done()
     }
   }
+
 }

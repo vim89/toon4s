@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Heavy JMH run with sensible defaults and a soft timeout guard.
-# Expected wall time: ~80–120s on typical laptops.
+# Expected wall time: ~80-120s on typical laptops.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"

@@ -54,7 +54,7 @@
   <!-- Performance & USPs -->
   <rect x="410" y="160" width="390" height="180" class="box" />
   <text x="420" y="185" class="title">Performance and Features</text>
-  <text x="420" y="205" class="note">• Token savings: ~30–60% vs formatted JSON</text>
+  <text x="420" y="205" class="note">• Token savings: ~30-60% vs formatted JSON</text>
   <text x="420" y="225" class="note">• Example: tags → <tspan class="highlight">tags[3]: jazz,chill,lofi</tspan></text>
   <text x="420" y="245" class="note">• JMH (Java 21): decode_tabular <tspan class="highlight">866 ops/ms</tspan></text>
   <text x="420" y="265" class="note">• decode_list 863, decode_nested 625 ops/ms</text>

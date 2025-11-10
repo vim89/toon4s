@@ -188,13 +188,13 @@ Built for the future of JVM concurrency:
 
 toon4s proves you don't have to choose between **performance** and **purity**:
 
-| Traditional Tradeoff | How toon4s Achieves Both |
-|---------------------|--------------------------|
-| "Mutation is faster" | **Tail recursion + accumulators** match imperative performance while staying pure |
-| "Exceptions are simpler" | **Either + railway-oriented programming** is just as ergonomic with for-comprehensions |
-| "ThreadLocal is convenient" | **State threading pattern** works seamlessly with virtual threads (future-proof) |
-| "Any/casting saves time" | **Sealed ADTs + exhaustive matching** catch bugs at compile time (saves debugging time) |
-| "External libs add features" | **Zero dependencies** means zero CVEs, zero conflicts, minimal attack surface |
+| Traditional tradeoff         | How toon4s achieves both                                                                |
+|------------------------------|-----------------------------------------------------------------------------------------|
+| "Mutation is faster"         | **Tail recursion + accumulators** match imperative performance while staying pure       |
+| "Exceptions are simpler"     | **Either + railway-oriented programming** is just as ergonomic with for-comprehensions  |
+| "ThreadLocal is convenient"  | **State threading pattern** works seamlessly with virtual threads (future-proof)        |
+| "Any/casting saves time"     | **Sealed ADTs + exhaustive matching** catch bugs at compile time (saves debugging time) |
+| "External libs add features" | **Zero dependencies** means zero CVEs, zero conflicts, minimal attack surface           |
 
 **The result**: A library that's both **safer** (pure FP, types) and **faster to maintain** (no surprises, composable).
 
@@ -245,7 +245,7 @@ decode_nested        625.473 ±   1.714  ops/ms
 encode_object        213.798 ±   2.628  ops/ms
 ```
 
-**Performance Highlights:**
+**Performance highlights:**
 - **Tabular decoding**: ~866 ops/ms - highly optimized for CSV-like structures
 - **List decoding**: ~863 ops/ms - fast array processing
 - **Nested decoding**: ~625 ops/ms - efficient for deep object hierarchies
@@ -796,7 +796,7 @@ sequenceDiagram
 - `StreamingEncoder` - Streams directly to Writer for large datasets
 - `TreeWalker[T]` - Universal adapter for encoding from Jackson JsonNode, Circe Json, Play JSON, etc. without JsonValue conversion
 - `TreeConstructionVisitor[T]` - Universal adapter for decoding to Jackson JsonNode, Circe Json, etc. without JsonValue intermediate
-- `VisitorConverter[T]` - Typeclass for converting domain models to JsonValue with `.toJsonValue` syntax (Rock the JVM pattern)
+- `VisitorConverter[T]` - Typeclass for converting domain models to JsonValue with `.toJsonValue` syntax
 
 **Performance:** O(n) time, O(d) space where d = depth. Perfect for processing millions of rows with constant memory.
 

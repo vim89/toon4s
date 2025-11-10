@@ -5,7 +5,7 @@ import io.toonformat.toon4s.JsonValue
 /**
  * Typeclass for converting values to JsonValue via visitor pattern.
  *
- * Inspired by Rock the JVM's JSONConverter pattern - enables elegant `.toJsonValue` syntax.
+ * Enables elegant `.toJsonValue` syntax.
  *
  * ==Usage==
  * {{{

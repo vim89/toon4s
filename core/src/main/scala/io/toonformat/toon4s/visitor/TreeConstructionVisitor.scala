@@ -8,7 +8,7 @@ import scala.collection.immutable.VectorMap
  * This is the reverse of TreeWalker: '''decode TOON directly to Jackson JsonNode, Circe Json, or
  * any tree without JsonValue intermediate'''.
  *
- * ==Why This Matters==
+ * ==Why this matters==
  * Standard flow creates 2 trees:
  *   1. TOON string → JsonValue (toon4s AST)
  *   2. JsonValue → JsonNode (Jackson AST)
@@ -17,7 +17,7 @@ import scala.collection.immutable.VectorMap
  *   - '''Direct decode''': TOON string → Visitor[JsonNode] → Jackson JsonNode
  *   - '''Zero overhead''': No JsonValue allocation
  *
- * ==Real-World Use Case==
+ * ==Real-world use case==
  * {{{
  * // You need Jackson JsonNode for REST API
  * import com.fasterxml.jackson.databind.ObjectMapper
@@ -202,9 +202,9 @@ object TreeConstructionVisitor {
    */
   def forJacksonExample: String =
     """
-See TreeConstructionVisitor scaladoc for Jackson adapter example.
-Add Jackson dependency and copy the adapter to your codebase.
-"""
+       See TreeConstructionVisitor scaladoc for Jackson adapter example.
+       Add Jackson dependency and copy the adapter to your codebase.
+       """
 
   /**
    * Example adapter for constructing Circe Json.

@@ -8,7 +8,7 @@ import scala.collection.immutable.VectorMap
  * This is the killer feature for zero-dep interop: '''encode/decode Jackson JsonNode, Circe Json,
  * Play JSON, or any tree without converting to JsonValue first'''.
  *
- * ==Why This Matters==
+ * ==Why this matters==
  * Most libraries force you to:
  *   1. Parse to their internal AST (JsonValue)
  *   2. Transform/validate
@@ -20,7 +20,7 @@ import scala.collection.immutable.VectorMap
  *   - '''Direct decoding''': TOON string → Visitor[JsonNode] → Jackson JsonNode (zero intermediate
  *     JsonValue)
  *
- * ==Real-World Use Case==
+ * ==Real-world use case==
  * {{{
  * // You have Jackson JsonNode from REST API
  * val jacksonNode: JsonNode = objectMapper.readTree(apiResponse)

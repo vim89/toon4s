@@ -757,6 +757,37 @@ flowchart TD
     style RETURN fill:#e1ffe1,stroke:#2d7a2d,color:#000
 ```
 
+**ObjectVisitor lifecycle (zero-overhead secret):**
+
+```mermaid
+sequenceDiagram
+    participant D as Dispatch
+    participant V as Visitor[T]
+    participant OV as ObjectVisitor[T]
+    participant DS as Downstream Visitor
+
+    Note over D,DS: Processing JObj({"name": "Ada", "age": 30})
+
+    D->>V: visitObject()
+    V->>OV: Create ObjectVisitor
+    OV-->>D: Return objVisitor
+
+    loop For each field
+        D->>OV: visitKey("name")
+        Note over OV: Store key, no allocation yet
+        D->>OV: visitValue()
+        OV->>DS: Return new visitor for value
+        D->>DS: Dispatch(JString("Ada"), visitor)
+        DS-->>D: Return result: T
+        D->>OV: visitValue(result)
+        Note over OV: Forward (key, T) to downstream
+    end
+
+    D->>OV: done()
+    OV-->>D: Return final T
+    Note over D,DS: Zero intermediate trees - results flow directly!
+```
+
 **Key visitors:**
 - `StringifyVisitor` - Terminal visitor producing TOON strings
 - `ConstructionVisitor` - Terminal visitor reconstructing JsonValue trees

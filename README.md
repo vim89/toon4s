@@ -3,6 +3,7 @@
 # toon4s: Token-Oriented Object Notation for JVM
 
 [![CI](https://github.com/vim89/toon4s/actions/workflows/ci.yml/badge.svg)](https://github.com/vim89/toon4s/actions/workflows/ci.yml)
+[![Release](https://github.com/vim89/toon4s/actions/workflows/release.yml/badge.svg)](https://github.com/vim89/toon4s/actions/workflows/release.yml)
 [![Scala](https://img.shields.io/badge/Scala-2.13%20%7C%203.3-red)](https://www.scala-lang.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
@@ -43,7 +44,7 @@ a compact, LLM-friendly data format that blends YAML-style indentation with CSV-
 
 ---
 
-## Key features & Scala-first benfits
+## Key features & Scala-first benefits
 
 | Theme | What you get | Why it matters on the JVM |
 | ----- | ------------ | ------------------------- |
@@ -119,7 +120,7 @@ Key type safety features:
 
 ### Design patterns in action
 
-**State Threading Pattern**
+**State threading pattern**
 ```scala
 @tailrec
 def collectFields(
@@ -140,7 +141,7 @@ def collectFields(
 }
 ```
 
-**Railway-Oriented Programming**
+**Railway-oriented programming**
 ```scala
 // Either accumulation instead of var err: Error | Null = null
 xs.foldLeft[Either[DecodeError, List[A]]](Right(Nil)) {
@@ -482,7 +483,7 @@ Fallbacks:
 - Decoding always yields the `JsonValue` ADT; pattern-match it if you prefer.
 - `SimpleJson.toScala` yields `Any` for quick-and-dirty interop.
 
-Why another TOON for Scala/JVM?
+Why another TOON for JVM/Scala?
 
 - Ergonomics: native Scala APIs and derivation reduce boilerplate versus Java/TS bindings in Scala codebases.
 - Footprint: zero-dep core minimizes transitive risk compared to libraries built atop general JSON stacks.
@@ -608,7 +609,7 @@ sbt +test              # Scala 2.13 and 3.3 suites
 ./smoke-tests/run-smoke.sh
 ```
 
-GitHub Actions runs:
+GitHub actions runs:
 
 1. **Quick checks**: scalafmt + `+compile` on Ubuntu.
 2. **Matrix tests**: Linux/macOS/Windows × Scala 2.13 & 3.3, with test-report artifacts when a shard fails.
@@ -687,7 +688,7 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    subgraph WITHOUT["❌ Without Visitors - O(n) space"]
+    subgraph WITHOUT["Without visitors - O(n) space"]
         W1["parse(row)"] --> W2["Tree 1"]
         W2 --> W3["filter(tree1)"]
         W3 --> W4["Tree 2"]
@@ -695,7 +696,7 @@ flowchart TD
         W5 --> W6["String"]
     end
 
-    subgraph WITH["✅ With Visitors - O(d) space"]
+    subgraph WITH["With visitors - O(d) space"]
         V1["Dispatch(row, visitor)"] --> V2["Single Pass"]
         V2 --> V3["String"]
     end

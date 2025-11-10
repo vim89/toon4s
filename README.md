@@ -26,9 +26,9 @@ a compact, LLM-friendly data format that blends YAML-style indentation with CSV-
 
 ## Table of contents
 
-- [Key features & Scala-first USPs](#key-features--scala-first-usps)
+- [Key features & Scala-first benefits](#Key-features--Scala-first-benefits)
 - [Benchmarks at a glance](#benchmarks-at-a-glance)
-- [Architecture & design patterns](#architecture--design-patterns)
+- [Architecture & design principles](#design-principles)
 - [Installation](#installation)
 - [Quick start (library)](#quick-start-library)
 - [CLI usage](#cli-usage)

@@ -794,10 +794,30 @@ sequenceDiagram
 - `FilterKeysVisitor` - Intermediate visitor removing sensitive fields
 - `JsonRepairVisitor` - Fixes malformed LLM JSON (converts string "true" → JBool, normalizes keys, etc.)
 - `StreamingEncoder` - Streams directly to Writer for large datasets
+- `TreeWalker[T]` - Universal adapter for encoding from Jackson JsonNode, Circe Json, Play JSON, etc. without JsonValue conversion
+- `TreeConstructionVisitor[T]` - Universal adapter for decoding to Jackson JsonNode, Circe Json, etc. without JsonValue intermediate
 
 **Performance:** O(n) time, O(d) space where d = depth. Perfect for processing millions of rows with constant memory.
 
-See: `io.toonformat.toon4s.visitor` package docs and [Li Haoyi's article](https://www.lihaoyi.com/post/ZeroOverheadTreeProcessingwiththeVisitorPattern.html).
+**Jackson/Circe interop (zero-overhead):**
+
+```scala
+// Encode Jackson JsonNode directly to TOON without JsonValue
+import com.fasterxml.jackson.databind.JsonNode
+
+val jacksonNode: JsonNode = objectMapper.readTree(apiResponse)
+val toon: String = JacksonWalker.dispatch(jacksonNode, new StringifyVisitor(indent = 2))
+
+// Decode TOON directly to Jackson JsonNode without JsonValue
+val factory = JsonNodeFactory.instance
+val jacksonNode: JsonNode = Toon.decode(toonString)
+  .map(Dispatch(_, JacksonConstructionVisitor(factory)))
+  .fold(throw _, identity)
+```
+
+See `TreeWalker` and `TreeConstructionVisitor` scaladocs for complete Jackson/Circe adapter examples (copy-paste ready).
+
+See also: `io.toonformat.toon4s.visitor` package docs and [Li Haoyi's article](https://www.lihaoyi.com/post/ZeroOverheadTreeProcessingwiththeVisitorPattern.html).
 
 ### Streaming visitors
 

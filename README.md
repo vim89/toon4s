@@ -158,11 +158,11 @@ xs.foldLeft[Either[DecodeError, List[A]]](Right(Nil)) {
 | Metric | Value                    | Meaning |
 |--------|--------------------------|---------|
 | **Production code** | 5,887 lines (56 files)   | Well-organized, modular |
-| **Test coverage** | 380+ tests, 100% passing | Comprehensive validation |
+| **Test coverage** | 470+ tests, 100% passing  | Comprehensive validation |
 | **Tail-recursive fns** | With `@tailrec`          | Stack-safe, verified |
 | **Sealed ADTs** | traits/classes           | Exhaustive matching |
 | **VectorMap usage** | 32+ occurrences          | Deterministic ordering |
-| **Mutable state** | **No `vars` in parsers**   | Pure functional |
+| **Mutable state** | **No `vars` in parsers** | Pure functional |
 | **Unsafe casts** | 2 (documented as safe)   | Type-safe design |
 
 ### Modern JVM architecture
@@ -232,24 +232,25 @@ Use the CLI or the benchmark runner to measure your payloads:
 toon4s-cli --encode payload.json --stats --tokenizer o200k -o payload.toon
 
 # Option B: JMH runner (reproducible set)
-sbt jmhDev
+sbt jmhDev # quick JMH runs
+sbt jmhFull # heavy JMH runs
 ```
 
-Throughput (JMH, macOS M‑series, Java 21.0.9, Temurin OpenJDK; 5 warmup iterations × 2s, 5 measurement iterations × 2s):
+Throughput (JMH heavy, macOS M‑series, Java 21.0.9, Temurin OpenJDK; 5 warmup iterations × 2s, 5 measurement iterations × 2s):
 
 ```
-Benchmark              Score      Error   Units
-decode_tabular       865.609 ±  27.170  ops/ms
-decode_list          862.522 ±  19.230  ops/ms
-decode_nested        625.473 ±   1.714  ops/ms
-encode_object        213.798 ±   2.628  ops/ms
+Benchmark                          Mode  Cnt     Score    Error   Units
+EncodeDecodeBench.decode_list     thrpt    5   902.850 ±  7.589  ops/ms
+EncodeDecodeBench.decode_nested   thrpt    5   679.655 ±  3.999  ops/ms
+EncodeDecodeBench.decode_tabular  thrpt    5  1072.421 ± 15.344  ops/ms
+EncodeDecodeBench.encode_object   thrpt    5   205.145 ±  6.696  ops/ms
 ```
 
 **Performance highlights:**
-- **Tabular decoding**: ~866 ops/ms - highly optimized for CSV-like structures
-- **List decoding**: ~863 ops/ms - fast array processing
-- **Nested decoding**: ~625 ops/ms - efficient for deep object hierarchies
-- **Object encoding**: ~214 ops/ms - consistent encoding performance
+- **Tabular decoding**: ~1072 ops/ms - highly optimized for CSV-like structures
+- **List decoding**: ~903 ops/ms - fast array processing
+- **Nested decoding**: ~680 ops/ms - efficient for deep object hierarchies
+- **Object encoding**: ~205 ops/ms - consistent encoding performance
 
 Note: numbers vary by JVM/OS/data shape. Run your own payloads with JMH for apples‑to‑apples comparison.
 

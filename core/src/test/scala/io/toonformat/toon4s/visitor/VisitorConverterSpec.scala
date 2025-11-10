@@ -8,7 +8,9 @@ import io.toonformat.toon4s.visitor.VisitorConverter._
 class VisitorConverterSpec extends munit.FunSuite {
 
   case class User(name: String, age: Int, email: String)
+
   case class Post(content: String, likes: Int)
+
   case class Feed(user: User, posts: List[Post])
 
   // Custom converters (like JSONSerialization.scala example)

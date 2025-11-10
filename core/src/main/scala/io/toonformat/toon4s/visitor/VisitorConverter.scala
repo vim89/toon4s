@@ -30,7 +30,9 @@ import io.toonformat.toon4s.JsonValue
  * }}}
  */
 trait VisitorConverter[T] {
+
   def convert(value: T): JsonValue
+
 }
 
 object VisitorConverter {
@@ -52,7 +54,8 @@ object VisitorConverter {
     Dispatch(JsonValue.JArray(values.map(_.toJsonValue).toVector), new ConstructionVisitor())
 
   implicit def vectorConverter[T: VisitorConverter]: VisitorConverter[Vector[T]] =
-    (values: Vector[T]) => Dispatch(JsonValue.JArray(values.map(_.toJsonValue)), new ConstructionVisitor())
+    (values: Vector[T]) =>
+      Dispatch(JsonValue.JArray(values.map(_.toJsonValue)), new ConstructionVisitor())
 
   // Extension to add .toJsonValue to any type with VisitorConverter
   implicit class VisitorConverterOps[T](value: T)(implicit converter: VisitorConverter[T]) {
@@ -67,6 +70,7 @@ object VisitorConverter {
         converter.convert(value),
         new FilterKeysVisitor(keysToFilter, new StringifyVisitor(indent)),
       )
+
   }
 
 }

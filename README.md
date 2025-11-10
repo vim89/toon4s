@@ -708,6 +708,54 @@ flowchart TD
     style V3 fill:#e1ffe1,stroke:#2d7a2d,color:#000
 ```
 
+**Dispatch algorithm (how visitor traversal works):**
+
+```mermaid
+flowchart TD
+    START["Dispatch(json, visitor)"] --> MATCH{Pattern match JsonValue}
+
+    MATCH -->|"JString(s)"| VS["visitor.visitString(s)"]
+    MATCH -->|"JNumber(n)"| VN["visitor.visitNumber(n)"]
+    MATCH -->|"JBool(b)"| VB["visitor.visitBool(b)"]
+    MATCH -->|"JNull"| VNULL["visitor.visitNull()"]
+    MATCH -->|"JArray(elems)"| ARR["Map over elements:\nDispatch(elem, visitor)"]
+    MATCH -->|"JObj(fields)"| OBJ["visitor.visitObject()"]
+
+    ARR --> VARR["visitor.visitArray(results)"]
+
+    OBJ --> LOOP{"For each (key, value)"}
+    LOOP --> VKEY["objVisitor.visitKey(key)"]
+    VKEY --> VVAL["objVisitor.visitValue()"]
+    VVAL --> REC["Dispatch(value, newVisitor)"]
+    REC --> VVALRES["objVisitor.visitValue(result)"]
+    VVALRES --> LOOP
+    LOOP -->|"Done"| DONE["objVisitor.done()"]
+
+    VS --> RETURN["Return T"]
+    VN --> RETURN
+    VB --> RETURN
+    VNULL --> RETURN
+    VARR --> RETURN
+    DONE --> RETURN
+
+    style START fill:#e1f5ff,stroke:#0066cc,color:#000
+    style MATCH fill:#fff4e1,stroke:#cc8800,color:#000
+    style VS fill:#f0e1ff,stroke:#8800cc,color:#000
+    style VN fill:#f0e1ff,stroke:#8800cc,color:#000
+    style VB fill:#f0e1ff,stroke:#8800cc,color:#000
+    style VNULL fill:#f0e1ff,stroke:#8800cc,color:#000
+    style ARR fill:#f0e1ff,stroke:#8800cc,color:#000
+    style OBJ fill:#f0e1ff,stroke:#8800cc,color:#000
+    style VARR fill:#f0e1ff,stroke:#8800cc,color:#000
+    style LOOP fill:#fff4e1,stroke:#cc8800,color:#000
+    style VKEY fill:#f0e1ff,stroke:#8800cc,color:#000
+    style VVAL fill:#f0e1ff,stroke:#8800cc,color:#000
+    style REC fill:#fff4e1,stroke:#cc8800,color:#000
+    style VVALRES fill:#f0e1ff,stroke:#8800cc,color:#000
+    style DONE fill:#f0e1ff,stroke:#8800cc,color:#000
+    style RETURN fill:#e1ffe1,stroke:#2d7a2d,color:#000
+```
+
 **Key visitors:**
 - `StringifyVisitor` - Terminal visitor producing TOON strings
 - `ConstructionVisitor` - Terminal visitor reconstructing JsonValue trees

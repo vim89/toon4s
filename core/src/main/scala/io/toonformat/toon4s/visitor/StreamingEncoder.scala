@@ -96,8 +96,8 @@ object StreamingEncoder {
 /**
  * Streaming visitor that writes directly to a Writer.
  *
- * This is the value-add feature: encoding happens as traversal proceeds, with no intermediate String
- * buffers. For million-row datasets, this saves enormous amounts of memory.
+ * This is the value-add feature: encoding happens as traversal proceeds, with no intermediate
+ * String buffers. For million-row datasets, this saves enormous amounts of memory.
  *
  * @param writer
  *   The Writer to stream output to

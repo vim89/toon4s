@@ -796,6 +796,7 @@ sequenceDiagram
 - `StreamingEncoder` - Streams directly to Writer for large datasets
 - `TreeWalker[T]` - Universal adapter for encoding from Jackson JsonNode, Circe Json, Play JSON, etc. without JsonValue conversion
 - `TreeConstructionVisitor[T]` - Universal adapter for decoding to Jackson JsonNode, Circe Json, etc. without JsonValue intermediate
+- `VisitorConverter[T]` - Typeclass for converting domain models to JsonValue with `.toJsonValue` syntax (Rock the JVM pattern)
 
 **Performance:** O(n) time, O(d) space where d = depth. Perfect for processing millions of rows with constant memory.
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2] - 2025-11-10
+
+
+### Documentation
+- update CHANGELOG.md for main [skip ci] ([`09c447a`](https://github.com/vim89/toon4s/commit/09c447a234a177ebbc217ac282b43e6803e5d9f0)) by @github-actions[bot]
+
+
 ## [0.2.1] - 2025-11-10
 
 

@@ -9,7 +9,7 @@ import io.toonformat.toon4s.encode.Primitives
  * another visitor. StringifyVisitor demonstrates zero-overhead encoding by building the output
  * string directly during traversal without creating intermediate structures.
  *
- * ==Key Features==
+ * ==Key features==
  *   - '''Zero intermediate trees''': Encodes directly to String during traversal
  *   - '''Configurable indentation''': Supports custom indent sizes
  *   - '''Type-safe''': Generic type T = String enforced throughout
@@ -33,7 +33,7 @@ import io.toonformat.toon4s.encode.Primitives
  * // age: 30
  * }}}
  *
- * ==Performance Characteristics==
+ * ==Performance characteristics==
  *   - '''Time Complexity''': O(n) where n is tree size
  *   - '''Space Complexity''': O(d) for call stack where d is depth
  *   - '''Allocations''': One StringBuilder per object/array (reused via pooling in future

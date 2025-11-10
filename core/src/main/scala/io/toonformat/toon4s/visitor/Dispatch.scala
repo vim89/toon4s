@@ -10,7 +10,7 @@ import io.toonformat.toon4s.JsonValue._
  * and calls the appropriate visitor methods. This separates tree traversal logic from computation
  * logic, enabling flexible composition without intermediate data structures.
  *
- * ==Key Properties==
+ * ==Key properties==
  *   - '''Generic''': Works with any Visitor[T] implementation
  *   - '''Zero-overhead''': No intermediate structures created during traversal
  *   - '''Composable''': Visitors can be chained for complex transformations
@@ -41,7 +41,7 @@ import io.toonformat.toon4s.JsonValue._
  *   - `JArray` → Recursively dispatch elements, then `visitor.visitArray(results)`
  *   - `JObj` → Object visitor lifecycle (visitKey → visitValue → visitValue → done)
  *
- * ==Object Traversal Lifecycle==
+ * ==Object traversal lifecycle==
  * For objects, dispatch follows this sequence:
  * {{{
  * val objVisitor = visitor.visitObject()
@@ -75,14 +75,14 @@ object Dispatch {
    *   - '''Space Complexity''': O(d) where d is the tree depth (call stack)
    *   - '''Allocations''': Zero intermediate structures (visitors may allocate for their output)
    *
-   * ==Example - Simple Dispatch==
+   * ==Example - simple dispatch==
    * {{{
    * val json = JNumber(42)
    * val visitor = new SummationVisitor()
    * val sum: Int = Dispatch(json, visitor)  // Returns 42
    * }}}
    *
-   * ==Example - Chained Visitors==
+   * ==Example - Chained visitors==
    * {{{
    * // Chain: Validate → Transform → Stringify
    * val visitor = new ValidationVisitor(

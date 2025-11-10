@@ -11,14 +11,14 @@ import scala.collection.immutable.VectorMap
  * JsonValue structure during traversal. While this may seem pointless alone, it becomes powerful
  * when composed with intermediate visitors for transformations.
  *
- * ==Key Use Cases==
+ * ==Key use cases==
  *   - '''Transformation pipeline endpoint''': Chain with intermediate visitors to produce tree
  *     output
  *   - '''Validation with output''': Validate while reconstructing (fail fast on errors)
  *   - '''Normalization''': Apply transformations and produce normalized tree
  *   - '''Identity benchmark''': Measure pure visitor overhead
  *
- * ==Composition Example==
+ * ==Composition example==
  * {{{
  * import io.toonformat.toon4s.visitor._
  *
@@ -30,12 +30,12 @@ import scala.collection.immutable.VectorMap
  * val filtered: JsonValue = Dispatch(json, visitor)
  * }}}
  *
- * ==Performance Characteristics==
+ * ==Performance characteristics==
  *   - '''Time Complexity''': O(n) where n is tree size
  *   - '''Space Complexity''': O(n) for reconstructed tree + O(d) call stack
  *   - '''Allocations''': Same as original tree (case class instances)
  *
- * ==Zero-Overhead Insight==
+ * ==Zero-overhead insight==
  * While ConstructionVisitor allocates the same as the original tree, chaining it with
  * intermediate visitors avoids multiple intermediate trees:
  *   - '''Without visitors''': `filter(transform(normalize(tree)))` creates 3 intermediate trees

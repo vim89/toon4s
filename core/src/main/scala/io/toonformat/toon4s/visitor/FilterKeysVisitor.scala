@@ -7,14 +7,14 @@ package io.toonformat.toon4s.visitor
  * rather than producing final output. FilterKeysVisitor demonstrates composable transformations
  * by removing sensitive or unwanted fields during traversal.
  *
- * ==Key Features==
+ * ==Key features==
  *   - '''Zero intermediate trees''': Filters during traversal without creating temporary
  *     structures
  *   - '''Composable''': Can be chained with other visitors
  *   - '''Type-safe''': Generic type T matches downstream visitor
  *   - '''Streaming''': Processes data as it arrives
  *
- * ==Usage Examples==
+ * ==Usage examples==
  *
  * ===Example 1: Filter and Stringify===
  * {{{
@@ -38,7 +38,7 @@ package io.toonformat.toon4s.visitor
  * val cleaned: JsonValue = Dispatch(json, visitor)
  * }}}
  *
- * ===Example 3: Chain Multiple Filters===
+ * ===Example 3: Chain multiple filters===
  * {{{
  * // Remove keys, then normalize, then stringify
  * val visitor = new FilterKeysVisitor(
@@ -49,12 +49,12 @@ package io.toonformat.toon4s.visitor
  * )
  * }}}
  *
- * ==Performance Characteristics==
+ * ==Performance characteristics==
  *   - '''Time Complexity''': O(n) where n is tree size
  *   - '''Space Complexity''': O(d) for call stack + downstream visitor space
  *   - '''Allocations''': Zero (delegates to downstream which may allocate)
  *
- * ==Composition Pattern==
+ * ==Composition pattern==
  * Intermediate visitors follow this pattern:
  *   1. Receive a downstream visitor of type Visitor[T]
  *   1. Extend Visitor[T] with same type parameter

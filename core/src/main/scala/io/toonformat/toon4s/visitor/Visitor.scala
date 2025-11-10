@@ -8,19 +8,19 @@ import scala.collection.immutable.VectorMap
  * The Visitor Pattern enables flexible, streaming, zero-overhead processing of JSON-compatible
  * structures by separating traversal logic from computation logic.
  *
- * ==Key Benefits==
+ * ==Key benefits==
  *   - '''Zero intermediate structures''': Chain transformations without creating temporary trees
  *   - '''Composability''': Visitors can be chained together for complex transformations
  *   - '''Streaming''': Process data as it arrives, without loading entire tree into memory
  *   - '''Type safety''': Generic type `T` ensures type-correct composition
  *
- * ==Architecture==
+ * ==Design==
  * The visitor pattern consists of three components:
  *   1. [[Visitor]] - Defines operations for each node type (primitives and objects)
  *   2. [[ObjectVisitor]] - Handles object traversal with key-value pairs
  *   3. [[Dispatch]] - Traverses structures and calls visitor methods
  *
- * ==Usage Pattern==
+ * ==Usage pattern==
  * {{{
  * import io.toonformat.toon4s.visitor._
  * import io.toonformat.toon4s.JsonValue._
@@ -39,7 +39,7 @@ import scala.collection.immutable.VectorMap
  * )
  * }}}
  *
- * ==Visitor Types==
+ * ==Visitor types==
  *   - '''Terminal visitors''': Produce final output (StringifyVisitor, SummationVisitor)
  *   - '''Intermediate visitors''': Transform and forward to downstream (ValidationVisitor,
  *     TransformVisitor)
@@ -130,7 +130,7 @@ abstract class Visitor[T] {
  *   1. Repeat for all key-value pairs
  *   1. Call `done()` to finalize the object
  *
- * ==Usage Example==
+ * ==Usage example==
  * {{{
  * val objVisitor = visitor.visitObject()
  * for ((key, value) <- fields) {

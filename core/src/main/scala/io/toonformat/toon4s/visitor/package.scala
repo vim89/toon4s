@@ -6,6 +6,7 @@ package io.toonformat.toon4s
  * This package implements the Visitor Pattern for flexible, composable, zero-overhead processing
  * of JSON-compatible structures, as described in Li Haoyi's article "Zero-Overhead Tree Processing
  * with the Visitor Pattern".
+ * Link: Reference: https://www.lihaoyi.com/post/ZeroOverheadTreeProcessingwiththeVisitorPattern.html
  *
  * ==Overview==
  *
@@ -15,7 +16,7 @@ package io.toonformat.toon4s
  *   - '''Streaming''': Process data as it arrives without loading entire trees
  *   - '''Type safety''': Generic types ensure correct composition
  *
- * ==Core Components==
+ * ==Core components==
  *
  * '''[[Visitor]]''': Abstract visitor interface defining operations for each node type (strings,
  * numbers, booleans, null, arrays, objects).
@@ -25,18 +26,18 @@ package io.toonformat.toon4s
  * '''[[Dispatch]]''': Universal dispatcher that traverses JsonValue structures and calls visitor
  * methods.
  *
- * ==Visitor Types==
+ * ==Visitor types==
  *
- * '''Terminal Visitors''' (produce final output):
+ * '''Terminal visitors''' (produce final output):
  *   - [[StringifyVisitor]] - Converts to TOON format string
  *   - [[ConstructionVisitor]] - Reconstructs JsonValue trees
  *
- * '''Intermediate Visitors''' (transform and forward):
+ * '''Intermediate visitors''' (transform and forward):
  *   - [[FilterKeysVisitor]] - Removes specified keys from objects
  *
- * ==Usage Patterns==
+ * ==Usage patterns==
  *
- * ===Pattern 1: Simple Dispatch===
+ * ===Pattern 1: Simple dispatch===
  * {{{
  * import io.toonformat.toon4s.visitor._
  * import io.toonformat.toon4s.JsonValue._
@@ -46,7 +47,7 @@ package io.toonformat.toon4s
  * val result: String = Dispatch(json, visitor)
  * }}}
  *
- * ===Pattern 2: Chained Visitors===
+ * ===Pattern 2: Chained visitors===
  * {{{
  * // Chain: Filter → Stringify
  * val visitor = new FilterKeysVisitor(
@@ -56,7 +57,7 @@ package io.toonformat.toon4s
  * val sanitized: String = Dispatch(json, visitor)
  * }}}
  *
- * ===Pattern 3: Multiple Transformations===
+ * ===Pattern 3: Multiple transformations===
  * {{{
  * // Chain: Filter → Reconstruct tree
  * val visitor = new FilterKeysVisitor(
@@ -66,9 +67,9 @@ package io.toonformat.toon4s
  * val cleaned: JsonValue = Dispatch(json, visitor)
  * }}}
  *
- * ==Performance Benefits==
+ * ==Performance benefits==
  *
- * '''Without Visitors''' (multiple intermediate trees):
+ * '''Without visitors''' (multiple intermediate trees):
  * {{{
  * val step1 = filter(json)           // Creates intermediate tree 1
  * val step2 = normalize(step1)       // Creates intermediate tree 2
@@ -76,7 +77,7 @@ package io.toonformat.toon4s
  * // Total: 2 intermediate trees + 1 final string
  * }}}
  *
- * '''With Visitors''' (zero intermediate trees):
+ * '''With visitors''' (zero intermediate trees):
  * {{{
  * val visitor = new FilterKeysVisitor(
  *   keys,
@@ -88,9 +89,9 @@ package io.toonformat.toon4s
  * // Total: 0 intermediate trees + 1 final string
  * }}}
  *
- * ==Creating Custom Visitors==
+ * ==Creating custom visitors==
  *
- * ===Terminal Visitor Example===
+ * ===Terminal visitor example===
  * {{{
  * final class SummationVisitor extends Visitor[Int] {
  *   def visitString(value: String) = 0
@@ -102,7 +103,7 @@ package io.toonformat.toon4s
  * }
  * }}}
  *
- * ===Intermediate Visitor Example===
+ * ===Intermediate visitor example===
  * {{{
  * final class UppercaseKeysVisitor[T](downstream: Visitor[T]) extends Visitor[T] {
  *   def visitString(v: String) = downstream.visitString(v)
@@ -114,7 +115,7 @@ package io.toonformat.toon4s
  * }
  * }}}
  *
- * ==Design Patterns Applied==
+ * ==Design patterns used==
  *
  * This implementation demonstrates multiple Scala design patterns:
  *   - '''Visitor Pattern''': Separates algorithms from data structures

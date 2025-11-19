@@ -77,6 +77,17 @@ val commonScalacOptions = Seq(
 // SONATYPE_USERNAME, SONATYPE_PASSWORD, SONATYPE_HOST (optional, defaults to s01.oss.sonatype.org)
 // With dynverSonatypeSnapshots enabled, non-tag builds get -SNAPSHOT suffix and publish to Sonatype Snapshots
 
+// Allow snapshot releases to be published to Sonatype snapshots repository
+// This enables testing from feature branches before merging to main
+ThisBuild / publishMavenStyle := true
+ThisBuild / publishTo := {
+  val nexus = "https://s01.oss.sonatype.org/"
+  if (isSnapshot.value)
+    Some("snapshots" at nexus + "content/repositories/snapshots")
+  else
+    sonatypePublishToBundle.value
+}
+
 lazy val root = (project in file("."))
   .aggregate(core, cli, jmh, compare)
   .settings(

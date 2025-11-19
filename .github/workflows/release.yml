@@ -128,7 +128,8 @@ jobs:
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-          GITHUB_REF: refs/tags/${{ steps.tag.outputs.tag }}  # Tell sbt-ci-release this is a tag build
+          CI_RELEASE: publishSigned
+          GITHUB_REF: refs/tags/${{ steps.tag.outputs.tag }}
 
       - name: Publish SNAPSHOT to Sonatype
         id: snapshot_publish

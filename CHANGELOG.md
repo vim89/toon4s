@@ -6,12 +6,16 @@
 ### Bug fixes
 - Remove manual publishTo override, use sbt-ci-release defaults ([`5cbb704`](https://github.com/vim89/toon4s/commit/5cbb7045e0f2292629b3908bb7d57a5c748e5f54)) by @vim89
 - Ensure tags always have successful releases ([`139e291`](https://github.com/vim89/toon4s/commit/139e29189d83443777b788a5c2e2bbdc232c59f1)) by @vim89
+- Remove custom version logic that breaks sbt-ci-release ([`b723d20`](https://github.com/vim89/toon4s/commit/b723d206960fe51b1bc50a3fac36d79121f7c1c1)) by @vim89
+- Add strict version validation in release workflow ([`03c4e22`](https://github.com/vim89/toon4s/commit/03c4e22179bfcf9da86f7d97b5e3570695714234)) by @vim89
+- Strip whitespace from version string using xargs ([`ec38593`](https://github.com/vim89/toon4s/commit/ec38593e48bca22d5311b5fb240d7a14c228cc1b)) by @vim89
 
 
 
 ### Documentation
 - update CHANGELOG.md for main [skip ci] ([`2158688`](https://github.com/vim89/toon4s/commit/21586881707d9d3516723483245002822f8bccfe)) by @github-actions[bot]
 - Add stack safety comment to TreeWalker dispatch ([`7af1d48`](https://github.com/vim89/toon4s/commit/7af1d4884d64a25278079259209d2bdb501289a3)) by @vim89
+- update CHANGELOG.md for main [skip ci] ([`94b3a44`](https://github.com/vim89/toon4s/commit/94b3a4470684a67986b76a95fb6d565c12b9aee2)) by @github-actions[bot]
 
 
 

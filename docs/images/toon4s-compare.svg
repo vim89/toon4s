@@ -33,14 +33,14 @@
   <rect x="580" y="80" width="140" height="30" class="cell ok"/><text x="610" y="100" class="t">v1.4 spec</text>
 
   <!-- Row 2: Token savings -->
-  <rect x="220" y="115" width="140" height="30" class="cell ok"/><text x="232" y="135" class="t">30–60%</text>
-  <rect x="400" y="115" width="140" height="30" class="cell ok"/><text x="412" y="135" class="t">30–60%</text>
-  <rect x="580" y="115" width="140" height="30" class="cell ok"/><text x="592" y="135" class="t">30–60%</text>
+  <rect x="220" y="115" width="140" height="30" class="cell ok"/><text x="232" y="135" class="t">30-60%</text>
+  <rect x="400" y="115" width="140" height="30" class="cell ok"/><text x="412" y="135" class="t">30-60%</text>
+  <rect x="580" y="115" width="140" height="30" class="cell ok"/><text x="592" y="135" class="t">30-60%</text>
 
   <!-- Row 3: Encode throughput -->
   <rect x="220" y="150" width="140" height="30" class="cell"/><text x="228" y="170" class="t">~200 ops/ms</text>
   <rect x="400" y="150" width="140" height="30" class="cell"/><text x="408" y="170" class="t">~200 ops/ms</text>
-  <rect x="580" y="150" width="140" height="30" class="cell ok"/><text x="588" y="170" class="t">~213 ops/ms</text>
+  <rect x="580" y="150" width="140" height="30" class="cell ok"/><text x="588" y="170" class="t">~205 ops/ms</text>
 
   <!-- Row 4: Decode throughput -->
   <rect x="220" y="185" width="140" height="30" class="cell"/><text x="242" y="205" class="t">Yes</text>

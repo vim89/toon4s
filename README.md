@@ -3,6 +3,7 @@
 # toon4s: Token-Oriented Object Notation for JVM
 
 [![CI](https://github.com/vim89/toon4s/actions/workflows/ci.yml/badge.svg)](https://github.com/vim89/toon4s/actions/workflows/ci.yml)
+[![Release](https://github.com/vim89/toon4s/actions/workflows/release.yml/badge.svg)](https://github.com/vim89/toon4s/actions/workflows/release.yml)
 [![Scala](https://img.shields.io/badge/Scala-2.13%20%7C%203.3-red)](https://www.scala-lang.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
@@ -16,7 +17,7 @@ a compact, LLM-friendly data format that blends YAML-style indentation with CSV-
 - **Type safety first**: sealed ADTs, exhaustive pattern matching, zero unsafe casts, VectorMap for deterministic ordering
 - **Stack-safe by design**: @tailrec-verified functions, constant stack usage, handles arbitrarily deep structures
 - **Modern JVM ready**: Virtual thread compatible (no ThreadLocal), streaming optimized, zero dependencies (491KB core JAR)
-- **Production hardened**: 380+ passing tests, property-based testing, Either-based error handling, security limits
+- **Production hardened**: 480+ passing tests, property-based testing, Either-based error handling, security limits
 - **Railway-oriented programming**: For-comprehension error handling, no exceptions in happy paths, composable with Cats/ZIO/FS2
 
 > **Example**: `{ "tags": ["jazz","chill","lofi"] }` → `tags[3]: jazz,chill,lofi` (40-60% token savings)
@@ -25,9 +26,9 @@ a compact, LLM-friendly data format that blends YAML-style indentation with CSV-
 
 ## Table of contents
 
-- [Key features & Scala-first USPs](#key-features--scala-first-usps)
+- [Key features & Scala-first benefits](#Key-features--Scala-first-benefits)
 - [Benchmarks at a glance](#benchmarks-at-a-glance)
-- [Architecture & design patterns](#architecture--design-patterns)
+- [Architecture & design principles](#design-principles)
 - [Installation](#installation)
 - [Quick start (library)](#quick-start-library)
 - [CLI usage](#cli-usage)
@@ -43,20 +44,21 @@ a compact, LLM-friendly data format that blends YAML-style indentation with CSV-
 
 ---
 
-## Key features & Scala-first benfits
+## Key features & Scala-first benefits
 
-| Theme | What you get | Why it matters on the JVM |
-| ----- | ------------ | ------------------------- |
-| **Spec‑complete** | Full conformance with TOON v1.4 spec; parity with `toon` (TS) and `JToon` (Java). | Mixed stacks behave the same; token math is consistent across platforms. |
-| **Typed APIs (2 & 3)** | Scala 3 derivation for `Encoder`/`Decoder`; Scala 2.13 typeclasses via `ToonTyped`. | Compile‑time guarantees, no `Any`; safer refactors and zero-cost abstractions. |
-| **Pure & total** | All encoders/decoders are pure functions; decode returns `Either[DecodeError, JsonValue]`. | Idiomatic FP: easy to compose in Cats/ZIO/FS2; referentially transparent. |
-| **Deterministic ADTs** | `JsonValue` as a sealed ADT with `VectorMap` for objects; stable field ordering. | Exhaustive pattern matching; predictable serialization for testing/debugging. |
-| **Streaming visitors** | `foreachTabular` and nested `foreachArrays` (tail‑recursive, stack-safe). | Validate/process millions of rows without building a full AST; constant memory usage. |
-| **Zero‑dep core** | Core library has zero dependencies beyond Scala stdlib; CLI uses only `scopt` + `jtokkit`. | Tiny footprint (<100KB), simpler audits, no transitive dependency hell. |
-| **Strictness profiles** | `Strict` (spec-compliant) vs `Lenient` (error-tolerant) modes with validation policies. | Safer ingestion of LLM outputs and human-edited data; configurable validation. |
-| **CLI with budgets** | Built-in `--stats` (token counts), `--optimize` (delimiter selection); cross-platform. | Track token savings in CI/CD; pick optimal delimiter for your data shape. |
-| **Virtual thread ready** | No ThreadLocal usage; compatible with Java 21+ Project Loom virtual threads. | Future-proof for modern JVM concurrency; scales to millions of concurrent tasks. |
-| **Production hardened** | 381 passing tests; property-based testing; strict mode validation; security limits. | Battle-tested edge cases; prevents DoS via depth/length limits; safe for production. |
+| Theme | What you get                                                                                                                                                                 | Why it matters on the JVM |
+| ----- |------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| ------------------------- |
+| **Spec‑complete** | Full conformance with TOON v1.4 spec; parity with `toon` (TS) and `JToon` (Java).                                                                                            | Mixed stacks behave the same; token math is consistent across platforms. |
+| **Typed APIs (2 & 3)** | Scala 3 derivation for `Encoder`/`Decoder`; Scala 2.13 typeclasses via `ToonTyped`.                                                                                          | Compile‑time guarantees, no `Any`; safer refactors and zero-cost abstractions. |
+| **Pure & total** | All encoders/decoders are pure functions; decode returns `Either[DecodeError, JsonValue]`.                                                                                   | Idiomatic FP: easy to compose in Cats/ZIO/FS2; referentially transparent. |
+| **Deterministic ADTs** | `JsonValue` as a sealed ADT with `VectorMap` for objects; stable field ordering.                                                                                             | Exhaustive pattern matching; predictable serialization for testing/debugging. |
+| **Streaming visitors** | `foreachTabular` and nested `foreachArrays` (tail‑recursive, stack-safe).                                                                                                    | Validate/process millions of rows without building a full AST; constant memory usage. |
+| **Zero-overhead visitors** | Composable visitor pattern for streaming + transformations in single pass; includes JSON repair for LLM output. Universal `TreeWalker` adapters for Jackson/Circe/Play JSON. | Apache Spark workloads: repair + filter + encode 1M rows with O(d) memory; encode Jackson JsonNode→TOON or decode TOON→JsonNode without `JsonValue` intermediate. |
+| **Zero‑dep core** | Core library has zero dependencies beyond Scala stdlib; CLI uses only `scopt` + `jtokkit`.                                                                                   | Tiny footprint (<100KB), simpler audits, no transitive dependency hell. |
+| **Strictness profiles** | `Strict` (spec-compliant) vs `Lenient` (error-tolerant) modes with validation policies.                                                                                      | Safer ingestion of LLM outputs and human-edited data; configurable validation. |
+| **CLI with budgets** | Built-in `--stats` (token counts), `--optimize` (delimiter selection); cross-platform.                                                                                       | Track token savings in CI/CD; pick optimal delimiter for your data shape. |
+| **Virtual thread ready** | No ThreadLocal usage; compatible with Java 21+ Project Loom virtual threads.                                                                                                 | Future-proof for modern JVM concurrency; scales to millions of concurrent tasks. |
+| **Production hardened** | 480+ passing tests; property-based testing; strict mode validation; security limits.                                                                                         | Battle-tested edge cases; prevents DoS via depth/length limits; safe for production. |
 
 ---
 
@@ -118,7 +120,7 @@ Key type safety features:
 
 ### Design patterns in action
 
-**State Threading Pattern**
+**State threading pattern**
 ```scala
 @tailrec
 def collectFields(
@@ -139,7 +141,7 @@ def collectFields(
 }
 ```
 
-**Railway-Oriented Programming**
+**Railway-oriented programming**
 ```scala
 // Either accumulation instead of var err: Error | Null = null
 xs.foldLeft[Either[DecodeError, List[A]]](Right(Nil)) {
@@ -156,11 +158,11 @@ xs.foldLeft[Either[DecodeError, List[A]]](Right(Nil)) {
 | Metric | Value                    | Meaning |
 |--------|--------------------------|---------|
 | **Production code** | 5,887 lines (56 files)   | Well-organized, modular |
-| **Test coverage** | 380+ tests, 100% passing | Comprehensive validation |
+| **Test coverage** | 480+ tests, 100% passing | Comprehensive validation |
 | **Tail-recursive fns** | With `@tailrec`          | Stack-safe, verified |
 | **Sealed ADTs** | traits/classes           | Exhaustive matching |
 | **VectorMap usage** | 32+ occurrences          | Deterministic ordering |
-| **Mutable state** | **No `vars` in parsers**   | Pure functional |
+| **Mutable state** | **No `vars` in parsers** | Pure functional |
 | **Unsafe casts** | 2 (documented as safe)   | Type-safe design |
 
 ### Modern JVM architecture
@@ -186,13 +188,13 @@ Built for the future of JVM concurrency:
 
 toon4s proves you don't have to choose between **performance** and **purity**:
 
-| Traditional Tradeoff | How toon4s Achieves Both |
-|---------------------|--------------------------|
-| "Mutation is faster" | **Tail recursion + accumulators** match imperative performance while staying pure |
-| "Exceptions are simpler" | **Either + railway-oriented programming** is just as ergonomic with for-comprehensions |
-| "ThreadLocal is convenient" | **State threading pattern** works seamlessly with virtual threads (future-proof) |
-| "Any/casting saves time" | **Sealed ADTs + exhaustive matching** catch bugs at compile time (saves debugging time) |
-| "External libs add features" | **Zero dependencies** means zero CVEs, zero conflicts, minimal attack surface |
+| Traditional tradeoff         | How toon4s achieves both                                                                |
+|------------------------------|-----------------------------------------------------------------------------------------|
+| "Mutation is faster"         | **Tail recursion + accumulators** match imperative performance while staying pure       |
+| "Exceptions are simpler"     | **Either + railway-oriented programming** is just as ergonomic with for-comprehensions  |
+| "ThreadLocal is convenient"  | **State threading pattern** works seamlessly with virtual threads (future-proof)        |
+| "Any/casting saves time"     | **Sealed ADTs + exhaustive matching** catch bugs at compile time (saves debugging time) |
+| "External libs add features" | **Zero dependencies** means zero CVEs, zero conflicts, minimal attack surface           |
 
 **The result**: A library that's both **safer** (pure FP, types) and **faster to maintain** (no surprises, composable).
 
@@ -230,24 +232,25 @@ Use the CLI or the benchmark runner to measure your payloads:
 toon4s-cli --encode payload.json --stats --tokenizer o200k -o payload.toon
 
 # Option B: JMH runner (reproducible set)
-sbt jmhDev
+sbt jmhDev # quick JMH runs
+sbt jmhFull # heavy JMH runs
 ```
 
-Throughput (JMH, macOS M‑series, Java 21.0.9, Temurin OpenJDK; 5 warmup iterations × 2s, 5 measurement iterations × 2s):
+Throughput (JMH heavy, macOS M‑series, Java 21.0.9, Temurin OpenJDK; 5 warmup iterations × 2s, 5 measurement iterations × 2s):
 
 ```
-Benchmark              Score      Error   Units
-decode_tabular       865.609 ±  27.170  ops/ms
-decode_list          862.522 ±  19.230  ops/ms
-decode_nested        625.473 ±   1.714  ops/ms
-encode_object        213.798 ±   2.628  ops/ms
+Benchmark                          Mode  Cnt     Score    Error   Units
+EncodeDecodeBench.decode_list     thrpt    5   902.850 ±  7.589  ops/ms
+EncodeDecodeBench.decode_nested   thrpt    5   679.655 ±  3.999  ops/ms
+EncodeDecodeBench.decode_tabular  thrpt    5  1072.421 ± 15.344  ops/ms
+EncodeDecodeBench.encode_object   thrpt    5   205.145 ±  6.696  ops/ms
 ```
 
-**Performance Highlights:**
-- **Tabular decoding**: ~866 ops/ms - highly optimized for CSV-like structures
-- **List decoding**: ~863 ops/ms - fast array processing
-- **Nested decoding**: ~625 ops/ms - efficient for deep object hierarchies
-- **Object encoding**: ~214 ops/ms - consistent encoding performance
+**Performance highlights:**
+- **Tabular decoding**: ~1072 ops/ms - highly optimized for CSV-like structures
+- **List decoding**: ~903 ops/ms - fast array processing
+- **Nested decoding**: ~680 ops/ms - efficient for deep object hierarchies
+- **Object encoding**: ~205 ops/ms - consistent encoding performance
 
 Note: numbers vary by JVM/OS/data shape. Run your own payloads with JMH for apples‑to‑apples comparison.
 
@@ -481,7 +484,7 @@ Fallbacks:
 - Decoding always yields the `JsonValue` ADT; pattern-match it if you prefer.
 - `SimpleJson.toScala` yields `Any` for quick-and-dirty interop.
 
-Why another TOON for Scala/JVM?
+Why another TOON for JVM/Scala?
 
 - Ergonomics: native Scala APIs and derivation reduce boilerplate versus Java/TS bindings in Scala codebases.
 - Footprint: zero-dep core minimizes transitive risk compared to libraries built atop general JSON stacks.
@@ -607,7 +610,7 @@ sbt +test              # Scala 2.13 and 3.3 suites
 ./smoke-tests/run-smoke.sh
 ```
 
-GitHub Actions runs:
+GitHub actions runs:
 
 1. **Quick checks**: scalafmt + `+compile` on Ubuntu.
 2. **Matrix tests**: Linux/macOS/Windows × Scala 2.13 & 3.3, with test-report artifacts when a shard fails.
@@ -644,6 +647,183 @@ sbt jmhFull  # heavy run
 - Reporting: CI also emits JSON (`-rf json -rff /tmp/jmh.json`) and posts a summary table on PRs.
 - Machine baseline (indicative): macOS Apple M‑series (M2/M3), Temurin Java 21, default power settings.
 - Guidance: close heavy apps/IDEs, plug in AC power, warm JVM before measurement. Numbers vary by OS/JVM/data shapes-treat them as relative, not absolute.
+
+### Zero-overhead visitor pattern (v0.2.0+)
+
+For Apache Spark-style workloads processing millions of rows, toon4s provides a **composable visitor pattern** that eliminates intermediate allocations:
+
+```scala
+import io.toonformat.toon4s.visitor._
+
+// Compose: Repair LLM output → Filter sensitive keys → Encode
+val visitor = new JsonRepairVisitor(
+  new FilterKeysVisitor(
+    Set("password", "ssn", "api_key"),
+    new StringifyVisitor(indent = 2)
+  )
+)
+
+// Single pass, zero intermediate trees
+val cleanToon: String = Dispatch(llmJson, visitor)
+```
+
+**Visitor composition flow:**
+
+```mermaid
+flowchart LR
+    JSON["JsonValue Tree"] --> DISPATCH["Dispatch"]
+    DISPATCH --> REPAIR["JsonRepairVisitor"]
+    REPAIR --> FILTER["FilterKeysVisitor"]
+    FILTER --> STRINGIFY["StringifyVisitor"]
+    STRINGIFY --> OUTPUT["TOON String"]
+
+    style JSON fill:#e1f5ff,stroke:#0066cc,color:#000
+    style DISPATCH fill:#fff4e1,stroke:#cc8800,color:#000
+    style REPAIR fill:#f0e1ff,stroke:#8800cc,color:#000
+    style FILTER fill:#f0e1ff,stroke:#8800cc,color:#000
+    style STRINGIFY fill:#f0e1ff,stroke:#8800cc,color:#000
+    style OUTPUT fill:#e1ffe1,stroke:#2d7a2d,color:#000
+```
+
+**Performance comparison:**
+
+```mermaid
+flowchart TD
+    subgraph WITHOUT["Without visitors - O(n) space"]
+        W1["parse(row)"] --> W2["Tree 1"]
+        W2 --> W3["filter(tree1)"]
+        W3 --> W4["Tree 2"]
+        W4 --> W5["encode(tree2)"]
+        W5 --> W6["String"]
+    end
+
+    subgraph WITH["With visitors - O(d) space"]
+        V1["Dispatch(row, visitor)"] --> V2["Single Pass"]
+        V2 --> V3["String"]
+    end
+
+    style W2 fill:#ffe1e1,stroke:#cc0000,color:#000
+    style W4 fill:#ffe1e1,stroke:#cc0000,color:#000
+    style W6 fill:#e1ffe1,stroke:#2d7a2d,color:#000
+    style V1 fill:#f0e1ff,stroke:#8800cc,color:#000
+    style V2 fill:#fff4e1,stroke:#cc8800,color:#000
+    style V3 fill:#e1ffe1,stroke:#2d7a2d,color:#000
+```
+
+**Dispatch algorithm (how visitor traversal works):**
+
+```mermaid
+flowchart TD
+    START["Dispatch(json, visitor)"] --> MATCH{Pattern match JsonValue}
+
+    MATCH -->|"JString(s)"| VS["visitor.visitString(s)"]
+    MATCH -->|"JNumber(n)"| VN["visitor.visitNumber(n)"]
+    MATCH -->|"JBool(b)"| VB["visitor.visitBool(b)"]
+    MATCH -->|"JNull"| VNULL["visitor.visitNull()"]
+    MATCH -->|"JArray(elems)"| ARR["Map over elements:\nDispatch(elem, visitor)"]
+    MATCH -->|"JObj(fields)"| OBJ["visitor.visitObject()"]
+
+    ARR --> VARR["visitor.visitArray(results)"]
+
+    OBJ --> LOOP{"For each (key, value)"}
+    LOOP --> VKEY["objVisitor.visitKey(key)"]
+    VKEY --> VVAL["objVisitor.visitValue()"]
+    VVAL --> REC["Dispatch(value, newVisitor)"]
+    REC --> VVALRES["objVisitor.visitValue(result)"]
+    VVALRES --> LOOP
+    LOOP -->|"Done"| DONE["objVisitor.done()"]
+
+    VS --> RETURN["Return T"]
+    VN --> RETURN
+    VB --> RETURN
+    VNULL --> RETURN
+    VARR --> RETURN
+    DONE --> RETURN
+
+    style START fill:#e1f5ff,stroke:#0066cc,color:#000
+    style MATCH fill:#fff4e1,stroke:#cc8800,color:#000
+    style VS fill:#f0e1ff,stroke:#8800cc,color:#000
+    style VN fill:#f0e1ff,stroke:#8800cc,color:#000
+    style VB fill:#f0e1ff,stroke:#8800cc,color:#000
+    style VNULL fill:#f0e1ff,stroke:#8800cc,color:#000
+    style ARR fill:#f0e1ff,stroke:#8800cc,color:#000
+    style OBJ fill:#f0e1ff,stroke:#8800cc,color:#000
+    style VARR fill:#f0e1ff,stroke:#8800cc,color:#000
+    style LOOP fill:#fff4e1,stroke:#cc8800,color:#000
+    style VKEY fill:#f0e1ff,stroke:#8800cc,color:#000
+    style VVAL fill:#f0e1ff,stroke:#8800cc,color:#000
+    style REC fill:#fff4e1,stroke:#cc8800,color:#000
+    style VVALRES fill:#f0e1ff,stroke:#8800cc,color:#000
+    style DONE fill:#f0e1ff,stroke:#8800cc,color:#000
+    style RETURN fill:#e1ffe1,stroke:#2d7a2d,color:#000
+```
+
+**ObjectVisitor lifecycle (zero-overhead secret):**
+
+```mermaid
+sequenceDiagram
+    participant D as Dispatch
+    participant V as Visitor[T]
+    participant OV as ObjectVisitor[T]
+    participant DS as Downstream Visitor
+
+    Note over D,DS: Processing JObj({"name": "Ada", "age": 30})
+
+    D->>V: visitObject()
+    V->>OV: Create ObjectVisitor
+    OV-->>D: Return objVisitor
+
+    loop For each field
+        D->>OV: visitKey("name")
+        Note over OV: Store key, no allocation yet
+        D->>OV: visitValue()
+        OV->>DS: Return new visitor for value
+        D->>DS: Dispatch(JString("Ada"), visitor)
+        DS-->>D: Return result: T
+        D->>OV: visitValue(result)
+        Note over OV: Forward (key, T) to downstream
+    end
+
+    D->>OV: done()
+    OV-->>D: Return final T
+    Note over D,DS: Zero intermediate trees - results flow directly!
+```
+
+**Key visitors:**
+- `StringifyVisitor` - Terminal visitor producing TOON strings
+- `ConstructionVisitor` - Terminal visitor reconstructing JsonValue trees
+- `FilterKeysVisitor` - Intermediate visitor removing sensitive fields
+- `JsonRepairVisitor` - Fixes malformed LLM JSON (converts string "true" → JBool, normalizes keys, etc.)
+- `StreamingEncoder` - Streams directly to Writer for large datasets
+- `TreeWalker[T]` - Universal adapter for encoding from Jackson JsonNode, Circe Json, Play JSON, etc. without JsonValue conversion
+- `TreeConstructionVisitor[T]` - Universal adapter for decoding to Jackson JsonNode, Circe Json, etc. without JsonValue intermediate
+- `VisitorConverter[T]` - Typeclass for converting domain models to JsonValue with `.toJsonValue` syntax
+
+**Performance:** O(n) time, O(d) space where d = depth. Perfect for processing millions of rows with constant memory.
+
+**Jackson/Circe interop (zero-overhead, typeclass pattern):**
+
+```scala
+import io.toonformat.toon4s.visitor.TreeWalkerOps._
+
+// Setup: copy JacksonWalker adapter from TreeWalker scaladocs
+implicit val walker: TreeWalker[JsonNode] = JacksonWalker
+
+// Encode: Jackson JsonNode → TOON (zero JsonValue intermediate)
+val jacksonNode: JsonNode = objectMapper.readTree(apiResponse)
+val toon: String = jacksonNode.toToon(indent = 2)
+val filtered: String = jacksonNode.toToonFiltered(Set("password"), indent = 2)
+
+// Decode: TOON → Jackson JsonNode (zero JsonValue intermediate)
+val factory = JsonNodeFactory.instance
+val jacksonNode: JsonNode = Toon.decode(toonString)
+  .map(Dispatch(_, JacksonConstructionVisitor(factory)))
+  .fold(throw _, identity)
+```
+
+See `TreeWalker` and `TreeConstructionVisitor` scaladocs for complete Jackson/Circe adapter examples (copy-paste ready).
+
+See also: `io.toonformat.toon4s.visitor` package docs and [Li Haoyi's article](https://www.lihaoyi.com/post/ZeroOverheadTreeProcessingwiththeVisitorPattern.html).
 
 ### Streaming visitors
 

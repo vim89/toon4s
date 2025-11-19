@@ -13,6 +13,7 @@ import io.toonformat.toon4s.JsonValue._
 
 private[toon4s] object Normalize {
 
+  // TODO: Check feasibility for tailrec
   def toJson(value: Any): JsonValue = value match {
   case null                    => JNull
   case s: String               => JString(s)

@@ -1,5 +1,6 @@
 import sbt._
 import sbt.Keys._
+import sbtdynver.DynVerPlugin.autoImport._
 
 lazy val Scala3Latest = "3.3.3"
 
@@ -44,6 +45,25 @@ ThisBuild / dynverSeparator := "-" // Use '-' instead of '+' for better compatib
 
 ThisBuild / dynverVTagPrefix := true // Expect tags like v1.0.0 (default behavior)
 
+ThisBuild / dynverSonatypeSnapshots := true // Append -SNAPSHOT for Sonatype compatibility on non-tag builds
+
+// Custom version formatting: Use clean X.Y.Z-SNAPSHOT format (best practice: 1 minor ahead of latest release)
+ThisBuild / version := {
+  dynverGitDescribeOutput.value match {
+    case Some(v) if v.isSnapshot() =>
+      // For snapshots, bump minor version and use clean -SNAPSHOT suffix (e.g., 0.3.0-SNAPSHOT)
+      val tagVersion = v.ref.dropPrefix
+      val parts = tagVersion.split('.')
+      if (parts.length >= 2) {
+        val major = parts(0)
+        val minor = parts(1).toInt + 1
+        s"$major.$minor.0-SNAPSHOT"
+      } else v.sonatypeVersion
+    case Some(v) => v.ref.dropPrefix
+    case None => throw new IllegalStateException("No git describe output")
+  }
+}
+
 ThisBuild / autoAPIMappings := true
 
 val commonScalacOptions = Seq(
@@ -55,6 +75,8 @@ val commonScalacOptions = Seq(
 
 // sbt-ci-release handles sonatype configuration automatically via environment variables:
 // SONATYPE_USERNAME, SONATYPE_PASSWORD, SONATYPE_HOST (optional, defaults to s01.oss.sonatype.org)
+// With dynverSonatypeSnapshots enabled, non-tag builds get -SNAPSHOT suffix and publish to Sonatype Snapshots
+// The publishTo setting is automatically configured by sbt-ci-release for both snapshots and releases
 
 lazy val root = (project in file("."))
   .aggregate(core, cli, jmh, compare)

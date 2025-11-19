@@ -91,8 +91,14 @@ jobs:
           VERSION=$(sbt --batch --no-colors 'print version' | tail -1)
           echo "Version: $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          if [[ "$VERSION" =~ SNAPSHOT ]]; then
+            echo "is_snapshot=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_snapshot=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Publish to Maven Central
+        if: steps.version.outputs.is_snapshot == 'false'
         run: sbt --batch --no-colors ci-release
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
@@ -101,10 +107,20 @@ jobs:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           GITHUB_REF: refs/tags/${{ steps.tag.outputs.tag }}  # Tell sbt-ci-release this is a tag build
 
+      - name: Publish SNAPSHOT to Sonatype
+        if: steps.version.outputs.is_snapshot == 'true'
+        run: sbt --batch --no-colors +publishSigned
+        env:
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+          PGP_SECRET: ${{ secrets.PGP_SECRET }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+
       - name: Package CLI artifacts
         run: sbt --batch --no-colors cli/Universal/packageBin cli/Universal/packageZipTarball
 
       - name: Create GitHub Release
+        if: steps.version.outputs.is_snapshot == 'false'
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.tag.outputs.tag }}
@@ -115,7 +131,7 @@ jobs:
             Token-Oriented Object Notation for JVM - [TOON Format](https://github.com/toon-format/spec)
             
             ### What's changed
-            - [Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
+            - [Changelog](https://github.com/${{github.repository}}/blob/main/CHANGELOG.md)
             
             ---
 
@@ -123,7 +139,7 @@ jobs:
 
             **sbt**:
             ```scala
-            libraryDependencies += "io.toonformat" %% "toon4s-core" % "${{ steps.version.outputs.version }}"
+            libraryDependencies += "io.toonformat" %% "toon4s-core" % "${{steps.version.outputs.version}}"
             ```
 
             **Maven**:
@@ -131,7 +147,7 @@ jobs:
             <dependency>
               <groupId>io.toonformat</groupId>
               <artifactId>toon4s-core_3</artifactId>
-              <version>${{ steps.version.outputs.version }}</version>
+              <version>${{steps.version.outputs.version}}</version>
             </dependency>
             ```
             
@@ -139,12 +155,12 @@ jobs:
             
             ### Links
 
-            - [Maven Central](https://central.sonatype.com/artifact/io.toonformat/toon4s-core_3/${{ steps.version.outputs.version }})
-            - [Documentation](https://github.com/${{ github.repository }})
+            - [Maven Central](https://central.sonatype.com/artifact/io.toonformat/toon4s-core_3/${{steps.version.outputs.version}})
+            - [Documentation](https://github.com/${{github.repository}})
             
             ---
 
-            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for detailed changes.
+            See [CHANGELOG.md](https://github.com/${{github.repository}}/blob/main/CHANGELOG.md) for detailed changes.
           artifacts: "cli/target/universal/*.zip,cli/target/universal/*.tgz"
           draft: false
           prerelease: false
@@ -153,6 +169,7 @@ jobs:
           updateOnlyUnreleased: false
 
       - name: Trigger Changelog Update
+        if: steps.version.outputs.is_snapshot == 'false'
         uses: actions/github-script@v7
         env:
           RELEASE_TAG: ${{ steps.tag.outputs.tag }}
@@ -169,6 +186,7 @@ jobs:
             });
 
       - name: Release summary
+        if: steps.version.outputs.is_snapshot == 'false'
         run: |
           echo "## Release Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -181,3 +199,18 @@ jobs:
           echo "- [Maven Central](https://central.sonatype.com/artifact/io.toonformat/toon4s-core_3/${{ steps.version.outputs.version }})" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "🔄 Changelog update and PR sync will run next..." >> $GITHUB_STEP_SUMMARY
+
+      - name: Snapshot summary
+        if: steps.version.outputs.is_snapshot == 'true'
+        run: |
+          echo "## Snapshot Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version**: \`${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Repository**: Sonatype Snapshots" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Add to your build.sbt:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`scala" >> $GITHUB_STEP_SUMMARY
+          echo "resolvers += \"Sonatype Snapshots\" at \"https://s01.oss.sonatype.org/content/repositories/snapshots\"" >> $GITHUB_STEP_SUMMARY
+          echo "libraryDependencies += \"io.toonformat\" %% \"toon4s-core\" % \"${{ steps.version.outputs.version }}\"" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

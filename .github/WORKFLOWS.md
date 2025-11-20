@@ -17,9 +17,9 @@ Code Push → CI Tests → Auto Tag → Changelog → Release
 **Purpose**: Run tests and checks on every push and pull request
 
 **Triggers**:
-- Push to `main` branch
 - Pull requests
 - Manual via `workflow_dispatch`
+- Reusable via `workflow_call` (e.g., invoked by `release.yml`)
 
 **What it does**:
 - Quick checks: formatting, compilation, binary compatibility
@@ -27,6 +27,7 @@ Code Push → CI Tests → Auto Tag → Changelog → Release
 - Smoke tests: CLI functionality
 - Budget gate: token savings verification
 - JMH benchmarks: performance tests
+- Merge gate: the `All checks pass` job runs unconditionally and fails the workflow if **any** upstream stage is not `success`, so GitHub never shows the merge button while CI is red or skipped
 
 **Skip**: Add `[skip ci]` or `[skip release]` to commit message
 
@@ -37,7 +38,7 @@ Code Push → CI Tests → Auto Tag → Changelog → Release
 **Purpose**: Automatically create version tags based on conventional commits
 
 **Triggers**:
-- Push to `main` branch (excluding `**.md`, `docs/**`, `CHANGELOG.md`)
+- Push to `main` branch
 
 **What it does**:
 1. Analyzes commits since last tag
@@ -69,7 +70,7 @@ Code Push → CI Tests → Auto Tag → Changelog → Release
 **Purpose**: Generate changelog from conventional commits
 
 **Triggers**:
-- Tag creation (`v*`)
+- Repository dispatch event `release-completed` (sent by `release.yml`)
 - Manual via `workflow_dispatch`
 
 **What it does**:
@@ -94,12 +95,13 @@ Code Push → CI Tests → Auto Tag → Changelog → Release
 **Purpose**: Publish to Maven Central and create GitHub Release
 
 **Triggers**:
-- Tag creation (`v*`)
+- Tag push (`v*`)
+- Repository dispatch event `release-tag-created` (sent by `auto-tag.yml`)
 - Manual via `workflow_dispatch`
 
 **What it does**:
-1. Runs tests
-2. Publishes to Maven Central using `sbt-ci-release`
+1. Checks whether the most recent `ci.yml` run for the tag’s commit succeeded; if not found or red, it automatically reruns the full CI workflow before continuing
+2. Publishes to Maven Central using `sbt-ci-release` (runs `+publishSigned` so Scala 3 and Scala 2.13 artifacts are produced)
 3. Packages CLI artifacts (zip, tgz)
 4. Creates GitHub Release with artifacts and release notes
 
@@ -112,8 +114,8 @@ Code Push → CI Tests → Auto Tag → Changelog → Release
 - `SONATYPE_PASSWORD`: Sonatype Central Portal password
 
 **Edge cases handled**:
-- Only runs on version tags (not main branch)
-- Tests run before publishing (fail fast)
+- Only runs on version tags
+- Fails fast if the project version does not match the tag or is a `SNAPSHOT`
 - GitHub Release created only for version tags
 
 **Important**: Uses Sonatype Central Portal (legacy OSSRH sunset 2025-06-30)
@@ -127,24 +129,24 @@ The workflows are designed to work together **in sequence**:
 ### Happy path flow:
 
 ```
-1. Developer commits to main with "feat: add new feature"
+1. Developer opens a PR with "feat: add new feature"
    ↓
-2. CI workflow runs (tests pass) ✓
+2. CI workflow runs on the PR (tests pass) ✓
    ↓
-3. Auto Tag workflow runs:
+3. PR is merged into main → Auto Tag workflow runs:
    - Detects "feat:" prefix
    - Creates tag v0.2.0
    - Pushes tag
    ↓
-4. Tag push triggers TWO workflows in parallel:
-   ├─→ Changelog workflow:
-   │   - Generates CHANGELOG.md
-   │   - Commits back to main [skip ci]
-   │
-   └─→ Release workflow:
-       - Runs tests
-       - Publishes to Maven Central
-       - Creates GitHub Release
+4. Tag push triggers the Release workflow:
+   - Verifies CI already passed for the tagged commit (reruns full CI automatically if not)
+   - Publishes to Maven Central
+   - Packages CLI artifacts and creates the GitHub Release
+   - Dispatches release-completed
+   ↓
+5. Changelog workflow receives release-completed:
+   - Generates CHANGELOG.md
+   - Commits back to main with [skip ci]
 ```
 
 ### Edge case: No version bump
@@ -167,7 +169,8 @@ The workflows are designed to work together **in sequence**:
    - Creates tag v0.1.1 (patch bump)
    - Pushes tag
    ↓
-4. Changelog + Release workflows run
+4. Release workflow runs, succeeds, and dispatches release-completed
+5. Changelog workflow runs and updates the changelog
 ```
 
 ### Edge case: Multiple commits
@@ -192,10 +195,9 @@ The workflows are designed to work together **in sequence**:
 
 To prevent infinite loops and unnecessary runs:
 
-1. **[skip ci]**: Skips CI, Auto Tag workflows
-2. **[skip release]**: Skips CI, Auto Tag workflows
-3. **paths-ignore**: Auto Tag ignores `**.md`, `docs/**`, `CHANGELOG.md`
-4. **concurrency groups**: Prevents concurrent runs of same workflow
+1. **[skip ci]**: Skips CI and Auto Tag workflows
+2. **[skip release]**: Skips CI and Auto Tag workflows
+3. **concurrency groups**: Prevent concurrent runs of the same workflow
 
 ---
 
@@ -228,12 +230,8 @@ gh run list --workflow=release.yml
 ### Test changelog only:
 
 ```bash
-# Create tag manually
-git tag v0.1.0
-git push origin v0.1.0
-
-# Watch changelog workflow
-gh run watch
+# Trigger manually via workflow_dispatch
+gh workflow run changelog.yml
 ```
 
 ### Test release only:
@@ -253,12 +251,6 @@ gh workflow run release.yml -f tag=v0.1.0
 
 **Solution**: Ensure tags start with `v` (e.g., `v0.1.0`, not `0.1.0`)
 
-### Problem: "No tag push, publishing SNAPSHOT"
-
-**Cause**: Workflow triggered on main branch push instead of tag push
-
-**Solution**: This is normal behavior. Only tag pushes create releases.
-
 ### Problem: Changelog is empty
 
 **Cause**: No tags exist yet, or `cliff.toml` configuration issue
@@ -276,12 +268,11 @@ gh workflow run release.yml -f tag=v0.1.0
 
 ### Problem: Auto tag not creating tag
 
-**Cause**: No conventional commit prefix, or paths-ignore matched
+**Cause**: No conventional commit prefix, or commit message skipped automation
 
 **Solution**:
 1. Use conventional commit format
-2. Check if files changed are in paths-ignore
-3. Verify commit message doesn't have `[skip ci]`
+2. Verify commit message doesn't have `[skip ci]` / `[skip release]`
 
 ---
 

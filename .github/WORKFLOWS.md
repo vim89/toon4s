@@ -1,4 +1,4 @@
-# GitHub Workflows Documentation
+# GitHub workflows documentation
 
 This document explains how the GitHub Actions workflows work together in this repository.
 
@@ -32,7 +32,7 @@ Code Push → CI Tests → Auto Tag → Changelog → Release
 
 ---
 
-### 2. Auto Tag (`auto-tag.yml`)
+### 2. Auto tag (`auto-tag.yml`)
 
 **Purpose**: Automatically create version tags based on conventional commits
 
@@ -47,13 +47,13 @@ Code Push → CI Tests → Auto Tag → Changelog → Release
 
 **Uses**: [mathieudutour/github-tag-action](https://github.com/mathieudutour/github-tag-action) - proven, reliable
 
-**Conventional Commits**:
+**Conventional commits**:
 - `feat:` → MINOR bump (0.1.0 → 0.2.0)
 - `fix:` → PATCH bump (0.1.0 → 0.1.1)
 - `feat!:`, `fix!:`, or `BREAKING CHANGE:` → MAJOR bump (0.1.0 → 1.0.0)
 - `chore:`, `docs:`, `refactor:`, `test:`, etc. → PATCH bump
 
-**Edge Cases Handled**:
+**Edge cases handled**:
 - First tag starts at `v0.1.0`
 - No version bump if no relevant commits
 - Tag already exists: skips gracefully
@@ -79,7 +79,7 @@ Code Push → CI Tests → Auto Tag → Changelog → Release
 
 **Uses**: [git-cliff](https://git-cliff.org/) - conventional commits → changelog
 
-**Edge Cases Handled**:
+**Edge cases handled**:
 - First release: generates full changelog
 - No changes: skips commit
 - Concurrent runs: prevented via concurrency group
@@ -105,13 +105,13 @@ Code Push → CI Tests → Auto Tag → Changelog → Release
 
 **Uses**: `sbt-ci-release` 1.11.0+ (includes sbt-dynver, sbt-pgp, sbt-sonatype, sbt-git)
 
-**Required Secrets**:
+**Required secrets**:
 - `PGP_PASSPHRASE`: PGP signing key passphrase
 - `PGP_SECRET`: Base64 encoded PGP secret key
 - `SONATYPE_USERNAME`: Sonatype Central Portal username
 - `SONATYPE_PASSWORD`: Sonatype Central Portal password
 
-**Edge Cases Handled**:
+**Edge cases handled**:
 - Only runs on version tags (not main branch)
 - Tests run before publishing (fail fast)
 - GitHub Release created only for version tags
@@ -120,11 +120,11 @@ Code Push → CI Tests → Auto Tag → Changelog → Release
 
 ---
 
-## Workflow Synchronization
+## Workflow synchronization
 
 The workflows are designed to work together **in sequence**:
 
-### Happy Path Flow:
+### Happy path flow:
 
 ```
 1. Developer commits to main with "feat: add new feature"
@@ -147,7 +147,7 @@ The workflows are designed to work together **in sequence**:
        - Creates GitHub Release
 ```
 
-### Edge Case: No Version Bump
+### Edge case: No version bump
 
 ```
 1. Developer commits to main with "docs: update README [skip ci]"
@@ -155,7 +155,7 @@ The workflows are designed to work together **in sequence**:
 2. Skipped by all workflows (contains [skip ci])
 ```
 
-### Edge Case: Documentation Change
+### Edge case: Documentation change
 
 ```
 1. Developer commits to main with "docs: update README"
@@ -170,7 +170,7 @@ The workflows are designed to work together **in sequence**:
 4. Changelog + Release workflows run
 ```
 
-### Edge Case: Multiple Commits
+### Edge case: Multiple commits
 
 ```
 1. Developer pushes 3 commits:
@@ -178,7 +178,7 @@ The workflows are designed to work together **in sequence**:
    - "feat: new feature"
    - "chore: cleanup"
    ↓
-2. CI workflow runs ✓
+2. CI workflow runs
    ↓
 3. Auto Tag workflow:
    - Analyzes all 3 commits
@@ -188,7 +188,7 @@ The workflows are designed to work together **in sequence**:
 
 ---
 
-## Skip Mechanisms
+## Skip mechanisms
 
 To prevent infinite loops and unnecessary runs:
 
@@ -199,7 +199,7 @@ To prevent infinite loops and unnecessary runs:
 
 ---
 
-## Manual Triggers
+## Manual triggers
 
 All workflows support manual triggers for testing/debugging:
 
@@ -210,9 +210,9 @@ All workflows support manual triggers for testing/debugging:
 
 ---
 
-## Testing the Workflows
+## Testing the workflows
 
-### Test Auto Tagging:
+### Test auto tagging:
 
 ```bash
 # Make a feature commit
@@ -225,7 +225,7 @@ gh run list --workflow=changelog.yml
 gh run list --workflow=release.yml
 ```
 
-### Test Changelog Only:
+### Test changelog only:
 
 ```bash
 # Create tag manually
@@ -236,7 +236,7 @@ git push origin v0.1.0
 gh run watch
 ```
 
-### Test Release Only:
+### Test release only:
 
 ```bash
 # Trigger manually with specific tag
@@ -274,7 +274,7 @@ gh workflow run release.yml -f tag=v0.1.0
 
 **Solution**: Verify changelog.yml line 71 has `[skip ci]`
 
-### Problem: Auto Tag not creating tag
+### Problem: Auto tag not creating tag
 
 **Cause**: No conventional commit prefix, or paths-ignore matched
 
@@ -285,7 +285,7 @@ gh workflow run release.yml -f tag=v0.1.0
 
 ---
 
-## Conventional Commits Cheat Sheet
+## Conventional commits cheat sheet
 
 ```bash
 # Feature (minor bump)
@@ -314,7 +314,7 @@ git commit -m "docs: typo fix [skip ci]"
 
 ---
 
-## Version History
+## Version history
 
 - **v1.0.0**: Complete rewrite using proven GitHub Actions
   - mathieudutour/github-tag-action for auto-tagging

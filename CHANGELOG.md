@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2] - 2025-11-20
+
+
+### Documentation
+- update CHANGELOG.md for main [skip ci] ([`c4dcfab`](https://github.com/vim89/toon4s/commit/c4dcfab21bc2d35a063e5ed427c3f84b3a6e1014)) by @github-actions[bot]
+
+
 ## [0.3.1] - 2025-11-20
 
 
@@ -7,11 +14,20 @@
 - Force sbt-ci-release to do full release via CI_RELEASE env ([`480e896`](https://github.com/vim89/toon4s/commit/480e896a06d025e9e436041bce5176a6c76edcb2)) by @vim89
 - ci-release step exports both CI_COMMIT_TAG and BUILD_SOURCEBRANCH (alongside GITHUB_REF) with the actual tag being released. ([`07be7ec`](https://github.com/vim89/toon4s/commit/07be7ec387ae2963bee31e2669d8a4409e32bad6)) by @vim89
 - Maven release namespace and doc prerequisites ([`c366254`](https://github.com/vim89/toon4s/commit/c36625445041ed697fca17d9524c2aba5239a65e)) by @vim89
+- ci+release reuse or rerun CI before publishing, document dual Scala artifacts ([`750ef81`](https://github.com/vim89/toon4s/commit/750ef816f27cd53ef1c05a145a18b28677274767)) by @vim89
+
+
+
+### Continuous Integration
+- add scaladoc job and run main pushes for release reuse ([`90b0fb0`](https://github.com/vim89/toon4s/commit/90b0fb010884f08680a608127699c4e77a9780c9)) by @vim89
+- add scaladoc job and run main pushes for release reuse ([`e91ff08`](https://github.com/vim89/toon4s/commit/e91ff084d41dc32fc01744a5bbbd4040ffd30663)) by @vim89
 
 
 
 ### Documentation
 - update CHANGELOG.md for main [skip ci] ([`1fb9e87`](https://github.com/vim89/toon4s/commit/1fb9e876974e58b1033180df4ea62752a3ed6028)) by @github-actions[bot]
+- updated WORKFLOWS.md [skip-ci] [skip-release] ([`0e6841e`](https://github.com/vim89/toon4s/commit/0e6841e8baf5713474c5e4e7270ca1df37987666)) by @vim89
+- fix Scaladoc examples blocking release ([`36a228b`](https://github.com/vim89/toon4s/commit/36a228b05d7880e9dde95a9ada849b75dc4c3e34)) by @vim89
 
 
 ## [0.3.0] - 2025-11-19

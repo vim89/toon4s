@@ -149,6 +149,16 @@ object Main {
         .validate(n => if (n > 0) success else failure("indent must be positive"))
         .action((indent, c) => c.copy(indent = indent))
         .text("Indentation used for encoding (default: 2)."),
+      opt[Boolean]("strict")
+        .hidden()
+        .optional()
+        .action { (v, c) =>
+          System.err.println(
+            "[deprecated] --strict is deprecated; use --strictness strict|lenient (defaults to strict)."
+          )
+          c.copy(strictness = if (v) "strict" else "lenient")
+        }
+        .text("Deprecated alias for --strictness (use --strictness strict|lenient)."),
       opt[String]("strictness")
         .valueName("strict|lenient")
         .validate(v =>

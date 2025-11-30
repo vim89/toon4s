@@ -153,4 +153,65 @@ class DecodeSpec extends FunSuite {
     }
   }
 
+  test("path expansion conflict throws in strict mode") {
+    val input =
+      """user.name: Alice
+        |user: 1
+        |""".stripMargin
+
+    val options = DecodeOptions(
+      indent = 2,
+      strictness = Strictness.Strict,
+      expandPaths = PathExpansion.Safe,
+    )
+
+    val result = Toon.decode(input, options)
+    assert(result.isLeft, "Strict mode should reject path expansion conflicts")
+    result.left.foreach { err =>
+      assert(err.isInstanceOf[DecodeError.Syntax])
+      assert(err.message.contains("Path expansion conflict"))
+      assert(err.message.contains("existing=object"))
+    }
+  }
+
+  test("path expansion conflict resolves with LWW in lenient mode") {
+    val input =
+      """user.name: Alice
+        |user: 1
+        |""".stripMargin
+
+    val options = DecodeOptions(
+      indent = 2,
+      strictness = Strictness.Lenient,
+      expandPaths = PathExpansion.Safe,
+    )
+
+    val result = Toon.decode(input, options)
+    assert(result.isRight, s"Lenient mode should resolve conflict, got $result")
+    val expected = JObj(VectorMap("user" -> JNumber(BigDecimal(1))))
+    assertEquals(result, Right(expected))
+  }
+
+  test("path expansion handles array vs object conflicts in lenient mode") {
+    val input =
+      """data.items: 1
+        |data:
+        |  items[1]:
+        |    - 2
+        |""".stripMargin
+
+    val options = DecodeOptions(
+      indent = 2,
+      strictness = Strictness.Lenient,
+      expandPaths = PathExpansion.Safe,
+    )
+
+    val result = Toon.decode(input, options)
+    assert(result.isRight, s"Lenient mode should resolve array/object conflict, got $result")
+    val expected = JObj(
+      VectorMap("data" -> JObj(VectorMap("items" -> JArray(Vector(JNumber(BigDecimal(2)))))))
+    )
+    assertEquals(result, Right(expected))
+  }
+
 }

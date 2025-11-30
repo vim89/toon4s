@@ -76,9 +76,11 @@ private[decode] object PathExpander {
   case head +: tail =>
     val child: VectorMap[String, JsonValue] = acc.get(head) match {
     case Some(JObj(obj)) => obj
-    case Some(_)         =>
+    case Some(existing)  =>
       if (strict)
-        throw DecodeError.Syntax(s"Path expansion conflict at '$head' while expanding '$pathKey'")
+        throw DecodeError.Syntax(
+          s"Path expansion conflict at '$head' (existing=${typeName(existing)}, incoming=object) while expanding '$pathKey'"
+        )
       else VectorMap.empty
     case None => VectorMap.empty
     }
@@ -103,21 +105,36 @@ private[decode] object PathExpander {
         acc.updated(key, JObj(merged))
       case _ =>
         if (strict)
-          throw DecodeError.Syntax(s"Path expansion conflict at '$key' while expanding '$pathKey'")
+          throw DecodeError.Syntax(
+            s"Path expansion conflict at '$key' (existing=object, incoming=${typeName(value)}) while expanding '$pathKey'"
+          )
         else acc.updated(key, value)
       }
     case Some(existing) =>
       value match {
       case JObj(incoming) =>
         if (strict)
-          throw DecodeError.Syntax(s"Path expansion conflict at '$key' while expanding '$pathKey'")
+          throw DecodeError.Syntax(
+            s"Path expansion conflict at '$key' (existing=${typeName(existing)}, incoming=object) while expanding '$pathKey'"
+          )
         else acc.updated(key, JObj(incoming))
       case _ =>
         if (strict)
-          throw DecodeError.Syntax(s"Path expansion conflict at '$key' while expanding '$pathKey'")
+          throw DecodeError.Syntax(
+            s"Path expansion conflict at '$key' (existing=${typeName(existing)}, incoming=${typeName(value)}) while expanding '$pathKey'"
+          )
         else acc.updated(key, value)
       }
     }
+  }
+
+  private def typeName(value: JsonValue): String = value match {
+  case JObj(_)    => "object"
+  case JArray(_)  => "array"
+  case JString(_) => "string"
+  case JNumber(_) => "number"
+  case JBool(_)   => "boolean"
+  case JNull      => "null"
   }
 
   private def mergeObjects(

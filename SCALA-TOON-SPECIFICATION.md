@@ -28,3 +28,10 @@ review; decoders stay lenient toward legacy v2.0/v2.1 layouts.
 `toon4s` implements the Scala/JVM interpretation of that spec (encoding, decoding, CLI) while
 maintaining deterministic behavior, strict mode validation, and zero-dependency core. Use the
 Options in the README to enable folding/expansion features introduced in v2.0.
+
+## Upgrading from earlier versions (1.4 / 2.0.1)
+
+- CLI: `--strict` is deprecated; use `--strictness strict|lenient` (defaults to strict). The old flag remains temporarily.
+- Length markers: legacy `[#N]` headers are no longer produced; decoders stay lenient to legacy files.
+- Row depth: list-item tabular arrays emit rows at depth `+2` (v3 layout) while decoders accept legacy depths.
+- New optional features: key folding (`keyFolding="safe"`, `flattenDepth`) and path expansion (`expandPaths="safe"`) are off by default for backward compatibility.

@@ -605,6 +605,15 @@ These are conscious design decisions:
 
 ---
 
+## Upgrading to v2.1.0
+
+- CLI flag rename: `--strict` is deprecated; use `--strictness strict|lenient`. The old flag still works with a warning for now.
+- Length markers: legacy `[#N]` headers are no longer emitted; headers remain `[N]{...}` with delimiter hints (e.g., `[2|]{...}`). Decoders stay lenient toward existing `[#N]` inputs.
+- Row depth: tabular arrays that are the first field in list-item objects now emit rows at depth `+2` (v3 layout). Decoders remain lenient to legacy depths.
+- Path expansion & key folding: available via `--expand-paths safe` and `--key-folding safe`; defaults remain off for backward compatibility.
+
+---
+
 ## Development & quality gates
 
 ```bash

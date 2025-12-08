@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.1] - 2025-12-08
+
+
+### Documentation
+- update CHANGELOG.md for main [skip ci] ([`7551c81`](https://github.com/vim89/toon4s/commit/7551c81ea9ee2ce7fd3bc2f207955c51b4d7c82d)) by @github-actions[bot]
+
+
+
+### Performance
+- optimize encode performance ~2x improvement ([`f8933be`](https://github.com/vim89/toon4s/commit/f8933be4f1fb3213bbc8a081a0cbed2db3336582))
+
+
 ## [0.4.0] - 2025-12-04
 
 

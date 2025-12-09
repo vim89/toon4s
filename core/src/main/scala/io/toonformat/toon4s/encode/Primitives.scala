@@ -6,6 +6,10 @@ import io.toonformat.toon4s.JsonValue._
 
 private[toon4s] object Primitives {
 
+  // Hoisted to object level to avoid recreation per call
+  // Hot path optimization - this Set was being created millions of times during encoding
+  private val structuralChars = Set('"', '\\', '[', ']', '{', '}', '\n', '\r', '\t')
+
   def encodePrimitive(p: JsonValue, delim: Delimiter): String = p match {
   case JNull      => C.NullLiteral
   case JBool(b)   => if (b) C.TrueLiteral else C.FalseLiteral
@@ -16,6 +20,34 @@ private[toon4s] object Primitives {
 
   def encodeStringLiteral(s: String, delim: Delimiter): String = {
     if (isSafeUnquoted(s, delim)) s else quoteAndEscape(s)
+  }
+
+  /**
+   * Quote and escape a string in a single pass, avoiding intermediate allocations.
+   *
+   * Merges quoting and escaping into one operation to eliminate intermediate StringBuilder
+   * allocations. Hot path optimization - called for every string value that needs quoting during
+   * encoding.
+   *
+   * @param s
+   *   The string to quote and escape
+   * @return
+   *   Quoted and escaped string
+   */
+  def quoteAndEscape(s: String): String = {
+    val builder = new StringBuilder(s.length + 18)
+    builder.append('"')
+    s.foreach {
+      case '\\'             => builder.append("\\\\")
+      case '"'              => builder.append("\\\"")
+      case '\n'             => builder.append("\\n")
+      case '\r'             => builder.append("\\r")
+      case '\t'             => builder.append("\\t")
+      case c if c.isControl => builder.append(f"\\u${c.toInt}%04x")
+      case c                => builder.append(c)
+    }
+    builder.append('"')
+    builder.result()
   }
 
   private def normalizeNumber(n: BigDecimal): String = {
@@ -30,8 +62,6 @@ private[toon4s] object Primitives {
   private val ValidKeyRegex = "^[A-Za-z_][A-Za-z0-9_.]*$".r
 
   def isValidUnquotedKey(key: String): Boolean = ValidKeyRegex.matches(key)
-
-  val structuralChars = Set('"', '\\', '[', ']', '{', '}', '\n', '\r', '\t')
 
   def isSafeUnquoted(value: String, delim: Delimiter): Boolean = {
     val passesBasicChecks =
@@ -96,23 +126,6 @@ private[toon4s] object Primitives {
       case c if c.isControl => builder.append(f"\\u${c.toInt}%04x")
       case c                => builder.append(c)
     }
-    builder.result()
-  }
-
-  /** Quote and escape a string in one pass. */
-  def quoteAndEscape(s: String): String = {
-    val builder = new StringBuilder(s.length + 18) // +2 for quotes, +16 for escapes
-    builder.append('"')
-    s.foreach {
-      case '\\'             => builder.append("\\\\")
-      case '"'              => builder.append("\\\"")
-      case '\n'             => builder.append("\\n")
-      case '\r'             => builder.append("\\r")
-      case '\t'             => builder.append("\\t")
-      case c if c.isControl => builder.append(f"\\u${c.toInt}%04x")
-      case c                => builder.append(c)
-    }
-    builder.append('"')
     builder.result()
   }
 

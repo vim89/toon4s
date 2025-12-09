@@ -215,16 +215,20 @@ object Encoders {
   private def extractTabularHeader(
       rows: Vector[scala.collection.immutable.VectorMap[String, JsonValue]]
   ): Option[List[String]] = {
-    rows.headOption.flatMap {
-      first =>
-        val keys = first.keys.toList
-        val uniform = rows.forall {
-          row =>
-            row.keySet == first.keySet && row.forall {
-              case (_, v) => isPrimitive(v)
-            }
+    // Early exit optimization using iterator.forall for short-circuit
+    if (rows.isEmpty) None
+    else {
+      val first = rows.head
+      val keys = first.keys.toList
+      if (keys.isEmpty) None
+      else {
+        val firstKeySet = first.keySet
+        // Use iterator for early exit on non-uniform rows
+        val uniform = rows.iterator.forall { row =>
+          row.keySet == firstKeySet && row.valuesIterator.forall(isPrimitive)
         }
-        if (uniform && keys.nonEmpty) Some(keys) else None
+        if (uniform) Some(keys) else None
+      }
     }
   }
 
@@ -249,7 +253,10 @@ object Encoders {
       case sw: StreamLineWriter =>
         sw.pushDelimitedPrimitives(depth, header, values, options.delimiter)
       case _ =>
-        val sb = new StringBuilder
+        // Pre-allocate StringBuilder capacity to avoid resizing during append
+        // Estimate: ~10 chars per value + delimiters
+        val estimatedSize = values.length * 11
+        val sb = new StringBuilder(estimatedSize)
         var i = 0
         while (i < values.length) {
           if (i > 0) sb.append(options.delimiter.char)
@@ -278,7 +285,9 @@ object Encoders {
                 .toVector
               sw.pushRowPrimitives(depth + 1, vs, options.delimiter)
             case _ =>
-              val sb = new StringBuilder
+              // Pre-allocate StringBuilder capacity to avoid resizing
+              val estimatedSize = headerFields.length * 11
+              val sb = new StringBuilder(estimatedSize)
               var i = 0
               while (i < headerFields.length) {
                 if (i > 0) sb.append(options.delimiter.char)
@@ -318,7 +327,9 @@ object Encoders {
     case sw: StreamLineWriter =>
       sw.pushListItemDelimitedPrimitives(depth, header, inner, options.delimiter)
     case _ =>
-      val sb = new StringBuilder
+      // Pre-allocate StringBuilder capacity to avoid resizing
+      val estimatedSize = inner.length * 11
+      val sb = new StringBuilder(estimatedSize)
       var i = 0
       while (i < inner.length) {
         if (i > 0) sb.append(options.delimiter.char)
@@ -351,7 +362,9 @@ object Encoders {
         case sw: StreamLineWriter =>
           sw.pushListItemDelimitedPrimitives(depth, header, arr, options.delimiter)
         case _ =>
-          val sb = new StringBuilder
+          // Pre-allocate StringBuilder capacity to avoid resizing
+          val estimatedSize = arr.length * 11
+          val sb = new StringBuilder(estimatedSize)
           var i = 0
           while (i < arr.length) {
             if (i > 0) sb.append(options.delimiter.char)
@@ -377,7 +390,9 @@ object Encoders {
           writer.pushListItem(depth, header)
           objectRows.foreach {
             row =>
-              val sb = new StringBuilder
+              // Pre-allocate StringBuilder capacity to avoid resizing
+              val estimatedSize = headerFields.length * 11
+              val sb = new StringBuilder(estimatedSize)
               var i = 0
               while (i < headerFields.length) {
                 if (i > 0) sb.append(options.delimiter.char)

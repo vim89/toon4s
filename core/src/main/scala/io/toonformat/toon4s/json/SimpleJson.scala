@@ -21,7 +21,7 @@ object SimpleJson {
     value
   }
 
-  // TODO: Check feasibility for tailrec
+  // Optimized stringify using while loops and builders to avoid intermediate allocations
   def stringify(value: JsonValue): String = value match {
   case JNull      => "null"
   case JBool(b)   => if (b) "true" else "false"
@@ -29,13 +29,40 @@ object SimpleJson {
     val normalized = n.bigDecimal.stripTrailingZeros.toPlainString
     if (normalized == "-0") "0" else normalized
   case JString(s)     => quote(s)
-  case JArray(values) => values.map(stringify).mkString("[", ",", "]")
-  case JObj(fields)   =>
-    fields.iterator
-      .map {
-        case (k, v) => s"${quote(k)}:${stringify(v)}"
+  case JArray(values) =>
+    // Use StringBuilder with while loop instead of .map().mkString()
+    if (values.isEmpty) "[]"
+    else {
+      val builder = new StringBuilder
+      builder.append('[')
+      var i = 0
+      while (i < values.length) {
+        if (i > 0) builder.append(',')
+        builder.append(stringify(values(i)))
+        i += 1
       }
-      .mkString("{", ",", "}")
+      builder.append(']')
+      builder.result()
+    }
+  case JObj(fields) =>
+    // Use while loop with iterator instead of .map().mkString()
+    if (fields.isEmpty) "{}"
+    else {
+      val builder = new StringBuilder
+      builder.append('{')
+      val iter = fields.iterator
+      var first = true
+      while (iter.hasNext) {
+        if (!first) builder.append(',')
+        first = false
+        val (k, v) = iter.next()
+        builder.append(quote(k))
+        builder.append(':')
+        builder.append(stringify(v))
+      }
+      builder.append('}')
+      builder.result()
+    }
   }
 
   // TODO: Check feasibility for tailrec
@@ -52,21 +79,27 @@ object SimpleJson {
   }
 
   private def quote(value: String): String = {
-    val escaped = value.foldLeft(new StringBuilder) {
-      (builder, ch) =>
-        ch match {
-        case '"'              => builder.append("\\\"")
-        case '\\'             => builder.append("\\\\")
-        case '\b'             => builder.append("\\b")
-        case '\f'             => builder.append("\\f")
-        case '\n'             => builder.append("\\n")
-        case '\r'             => builder.append("\\r")
-        case '\t'             => builder.append("\\t")
-        case c if c.isControl => builder.append(f"\\u${c.toInt}%04x")
-        case c                => builder.append(c)
-        }
+    // Single-pass quote and escape using while loop
+    // Avoids foldLeft allocation overhead and intermediate builder stages
+    val builder = new StringBuilder(value.length + 18)
+    builder.append('"')
+    var i = 0
+    while (i < value.length) {
+      value.charAt(i) match {
+      case '"'              => builder.append("\\\"")
+      case '\\'             => builder.append("\\\\")
+      case '\b'             => builder.append("\\b")
+      case '\f'             => builder.append("\\f")
+      case '\n'             => builder.append("\\n")
+      case '\r'             => builder.append("\\r")
+      case '\t'             => builder.append("\\t")
+      case c if c.isControl => builder.append(f"\\u${c.toInt}%04x")
+      case c                => builder.append(c)
+      }
+      i += 1
     }
-    s"\"${escaped.result()}\""
+    builder.append('"')
+    builder.result()
   }
 
   private object Parser {

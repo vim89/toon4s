@@ -33,7 +33,7 @@ object SimpleJson {
     // Use StringBuilder with while loop instead of .map().mkString()
     if (values.isEmpty) "[]"
     else {
-      val builder = new StringBuilder
+      val builder = new StringBuilder(values.length * 20)
       builder.append('[')
       var i = 0
       while (i < values.length) {

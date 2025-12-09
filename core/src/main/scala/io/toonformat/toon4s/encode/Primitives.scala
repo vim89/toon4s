@@ -6,6 +6,10 @@ import io.toonformat.toon4s.JsonValue._
 
 private[toon4s] object Primitives {
 
+  // Hoisted to object level to avoid recreation per call
+  // Hot path optimization - this Set was being created millions of times during encoding
+  private val structuralChars = Set('"', '\\', '[', ']', '{', '}', '\n', '\r', '\t')
+
   def encodePrimitive(p: JsonValue, delim: Delimiter): String = p match {
   case JNull      => C.NullLiteral
   case JBool(b)   => if (b) C.TrueLiteral else C.FalseLiteral
@@ -32,11 +36,12 @@ private[toon4s] object Primitives {
   def isValidUnquotedKey(key: String): Boolean = ValidKeyRegex.matches(key)
 
   def isSafeUnquoted(value: String, delim: Delimiter): Boolean = {
-    val structuralChars = Set('"', '\\', '[', ']', '{', '}', '\n', '\r', '\t')
-    val trimmed = value.trim
+    // Avoid creating intermediate string via trim to check for whitespace at start/end
+    // Use Character.isWhitespace() directly instead
     val passesBasicChecks =
       value.nonEmpty &&
-        trimmed == value &&
+        !Character.isWhitespace(value.charAt(0)) &&
+        !Character.isWhitespace(value.charAt(value.length - 1)) &&
         !value.contains(':') &&
         !value.contains(delim.char) &&
         !value.startsWith(C.ListItemMarker)

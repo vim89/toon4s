@@ -48,7 +48,7 @@ object SimpleJson {
     // Use while loop with iterator instead of .map().mkString()
     if (fields.isEmpty) "{}"
     else {
-      val builder = new StringBuilder
+      val builder = new StringBuilder(fields.size * 30)
       builder.append('{')
       val iter = fields.iterator
       var first = true

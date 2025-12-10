@@ -1,4 +1,4 @@
-# TOON Specification (Scala alignment)
+# TOON specification (Scala alignment)
 
 The canonical, language-agnostic specification now lives at
 [toon-format/spec](https://github.com/toon-format/spec). `toon4s` tracks that
@@ -36,60 +36,60 @@ Options in the README to enable folding/expansion features introduced in v2.0.
 - Row depth: list-item tabular arrays emit rows at depth `+2` (v3 layout) while decoders accept legacy depths.
 - New optional features: key folding (`keyFolding="safe"`, `flattenDepth`) and path expansion (`expandPaths="safe"`) are off by default for backward compatibility.
 
-## Scala Implementation Architecture
+## Scala implementation architecture
 
-### Pure Functional Design
+### Pure functional design
 
 toon4s implements the TOON spec with pure functional programming principles:
 
-**Pure Functions**: All encode/decode operations are referentially transparent with no side effects. The API returns `Either[DecodeError, JsonValue]` instead of throwing exceptions, enabling composability with Cats, ZIO, and other FP libraries.
+**Pure functions**: All encode/decode operations are referentially transparent with no side effects. The API returns `Either[DecodeError, JsonValue]` instead of throwing exceptions, enabling composability with Cats, ZIO, and other FP libraries.
 
 **Immutable ADTs**: The `JsonValue` sealed trait provides exhaustive pattern matching over `JNull`, `JBool`, `JNumber`, `JString`, `JArray`, and `JObj`. Objects use `VectorMap` for deterministic field ordering.
 
-**Type Safety**: Scala 3 derivation via `Encoder.derived` and `Decoder.derived` provides compile-time guarantees. Scala 2.13 users get equivalent safety through `ToonTyped` typeclasses.
+**Type safety**: Scala 3 derivation via `Encoder.derived` and `Decoder.derived` provides compile-time guarantees. Scala 2.13 users get equivalent safety through `ToonTyped` typeclasses.
 
-**Stack Safety**: All recursive operations use tail recursion or trampolining. The visitor pattern and cursor navigation are stack-safe, handling arbitrarily deep structures within configured limits.
+**Stack safety**: All recursive operations use tail recursion or trampolining. The visitor pattern and cursor navigation are stack-safe, handling arbitrarily deep structures within configured limits.
 
-### Performance with Purity
+### Performance with purity
 
 toon4s achieves **2x performance improvement** while maintaining functional purity:
 
-**Zero-Allocation Patterns**:
+**Zero-allocation patterns**:
 - Pre-allocated `StringBuilder` capacity based on estimated output size
 - Single-pass string processing (combined quote-finding + unescaping)
 - Cached common patterns (array headers for lengths 0-10)
 - `VectorBuilder` with while loops instead of functional chains
 
-**Hot-Path Optimization**:
+**Hot-Path optimization**:
 - Direct character operations instead of string allocations
 - Pattern matching for delimiter dispatch
 - Early-exit evaluation with `iterator.forall`
 - Hoisted constants outside loops
 
-**Memory Efficiency**:
+**Memory efficiency**:
 - Streaming visitors with O(depth) memory usage
 - No intermediate allocations in visitor chains
 - Tail-recursive iteration for large arrays
 - Stack-safe cursor navigation
 
-### Visitor Pattern Architecture
+### Visitor pattern architecture
 
 The visitor pattern enables zero-overhead transformations:
 
 **Universal TreeWalker**: Adapts external JSON libraries (Jackson, Circe, Play JSON) without converting to intermediate `JsonValue` representation.
 
-**Composable Visitors**: Chain multiple visitors (`FilterKeysVisitor`, `JsonRepairVisitor`, `StringifyVisitor`) in a single pass with O(1) memory overhead.
+**Composable visitors**: Chain multiple visitors (`FilterKeysVisitor`, `JsonRepairVisitor`, `StringifyVisitor`) in a single pass with O(1) memory overhead.
 
-**Streaming Guarantees**: Process millions of rows with constant memory using `foreachTabular` and `foreachArrays`, which iterate without building full ASTs.
+**Streaming guarantees**: Process millions of rows with constant memory using `foreachTabular` and `foreachArrays`, which iterate without building full ASTs.
 
-### Type-Driven Development
+### Type-driven development
 
 toon4s leverages Scala's type system for correctness:
 
-**Compile-Time Validation**: Encoder/Decoder derivation catches schema mismatches at compile time, not runtime.
+**Compile-time validation**: Encoder/Decoder derivation catches schema mismatches at compile time, not runtime.
 
 **Sealed ADTs**: Exhaustive pattern matching ensures all `JsonValue` cases are handled, preventing runtime errors.
 
-**Phantom Types**: Configuration types like `Strictness` and `KeyFolding` use sealed traits to restrict valid values at compile time.
+**Phantom types**: Configuration types like `Strictness` and `KeyFolding` use sealed traits to restrict valid values at compile time.
 
-**Zero-Cost Abstractions**: Type-level programming and inline optimizations ensure abstraction overhead is eliminated by the compiler.
+**Zero-cost abstractions**: Type-level programming and inline optimizations ensure abstraction overhead is eliminated by the compiler.

@@ -60,7 +60,7 @@ toon4s achieves **2x performance improvement** while maintaining functional puri
 - Cached common patterns (array headers for lengths 0-10)
 - `VectorBuilder` with while loops instead of functional chains
 
-**Hot-Path optimization**:
+**Hot-path optimization**:
 - Direct character operations instead of string allocations
 - Pattern matching for delimiter dispatch
 - Early-exit evaluation with `iterator.forall`

@@ -13,7 +13,7 @@ import org.apache.spark.sql.types._
 /**
  * Pure functional conversions between Spark Row and toon4s JsonValue.
  *
- * ==Design Principles==
+ * ==Design principles==
  *   - All functions are pure (referentially transparent, no side effects)
  *   - Exhaustive pattern matching on Spark DataTypes
  *   - Defensive null handling throughout

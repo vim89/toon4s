@@ -10,7 +10,7 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.udf
 
 /**
- * User-Defined Functions (UDFs) for TOON encoding/decoding in Spark SQL.
+ * User-defined Functions (UDFs) for TOON encoding/decoding in Spark SQL.
  *
  * ==Design==
  * Provides SQL functions that can be used in Spark SQL queries for TOON operations. Registered UDFs

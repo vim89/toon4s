@@ -13,7 +13,7 @@ import org.apache.spark.sql.types.StructType
 /**
  * Extension methods for DataFrame ↔ TOON conversion.
  *
- * ==Design Principles==
+ * ==Design principles==
  *   - Pure functional API with Either for error handling
  *   - Extension methods via implicit class (Scala idiom)
  *   - Chunking strategy for large datasets

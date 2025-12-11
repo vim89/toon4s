@@ -5,13 +5,13 @@ package io.toonformat.toon4s.spark
  *
  * Design aligned with llm4s (https://github.com/llm4s/llm4s) for forward compatibility.
  *
- * ==Migration Path==
+ * ==Migration path==
  * When llm4s is published to Maven Central, users can:
  *   1. Add llm4s dependency
  *   2. Use Llm4sAdapter to bridge between toon4s-spark and llm4s
  *   3. Gradually migrate to llm4s-native conversation model
  *
- * ==Current Status==
+ * ==Current status==
  * This package provides a simplified LLM client abstraction that mirrors llm4s design patterns but
  * works standalone. All types use similar naming and structure to llm4s for easy future migration.
  */

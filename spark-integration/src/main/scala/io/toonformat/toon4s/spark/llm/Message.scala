@@ -3,12 +3,12 @@ package io.toonformat.toon4s.spark.llm
 /**
  * Message types for LLM conversations.
  *
- * ==Design Alignment with llm4s==
+ * ==Design alignment with llm4s==
  * These types mirror llm4s's message model:
  *   - `org.llm4s.llmconnect.model.Message` (sealed trait)
  *   - `SystemMessage`, `UserMessage`, `AssistantMessage`
  *
- * ==Future Compatibility==
+ * ==Future compatibility==
  * When llm4s is available, these types can be converted to/from llm4s types using a compatibility
  * layer.
  *

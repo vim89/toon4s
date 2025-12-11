@@ -170,6 +170,10 @@ lazy val sparkIntegration = (project in file("spark-integration"))
       "org.scalameta"    %% "munit"     % "1.2.1" % Test,
     ),
     scalacOptions ++= commonScalacOptions,
+    // Allow Scala 2.13 compiler to read Scala 3 TASTy from toon4s-core
+    scalacOptions ++= {
+      if (scalaVersion.value.startsWith("2.13")) Seq("-Ytasty-reader") else Seq.empty
+    },
     // Cross-build for Spark compatibility (Spark supports Scala 2.13)
     crossScalaVersions := Seq(Scala213Latest),
     // Fix Spark class loader issues in tests - run tests in forked JVM

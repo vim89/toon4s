@@ -3,7 +3,7 @@ package io.toonformat.toon4s.spark.llm
 /**
  * LLM completion response with metadata.
  *
- * ==Design Alignment with llm4s==
+ * ==Design alignment with llm4s==
  * Mirrors llm4s's `org.llm4s.llmconnect.model.Completion`:
  *   - Comprehensive metadata (id, timestamps, model)
  *   - Token usage tracking

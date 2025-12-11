@@ -3,7 +3,7 @@ package io.toonformat.toon4s.spark.llm
 /**
  * LLM client abstraction aligned with llm4s design patterns.
  *
- * ==Design Philosophy==
+ * ==Design philosophy==
  * This trait mirrors llm4s's `org.llm4s.llmconnect.LLMClient` interface while remaining simple and
  * standalone. When llm4s is published, this interface can be used as an adapter layer.
  *
@@ -76,14 +76,14 @@ trait LlmClient {
    *
    * Matches llm4s: `def getContextWindow(): Int`
    */
-  def getContextWindow(): Int
+  def getContextWindow: Int
 
   /**
    * Get tokens reserved for completion.
    *
    * Matches llm4s: `def getReserveCompletion(): Int`
    */
-  def getReserveCompletion(): Int
+  def getReserveCompletion: Int
 
   /**
    * Calculate available token budget for prompt.
@@ -93,8 +93,8 @@ trait LlmClient {
    * Formula: (contextWindow - reserve) * (1 - headroom)
    */
   def getContextBudget(headroom: HeadroomPercent = HeadroomPercent.Standard): TokenBudget = {
-    val total = getContextWindow()
-    val reserved = getReserveCompletion()
+    val total = getContextWindow
+    val reserved = getReserveCompletion
     val available = ((total - reserved) * (1 - headroom.value)).toInt
     TokenBudget(available, total, reserved)
   }
@@ -158,7 +158,7 @@ trait LlmClient {
 /**
  * LLM configuration aligned with llm4s CompletionOptions.
  *
- * ==Design Alignment==
+ * ==Design alignment==
  * Extends original LlmConfig with fields matching llm4s's CompletionOptions:
  *   - temperature, maxTokens (already present)
  *   - topP, presencePenalty, frequencyPenalty (new, matching llm4s)
@@ -252,7 +252,7 @@ object LlmConfig {
 /**
  * Completion options for individual requests.
  *
- * ==Design Alignment with llm4s==
+ * ==Design alignment with llm4s==
  * Mirrors llm4s's `CompletionOptions` case class with fluent builders.
  *
  * @param temperature

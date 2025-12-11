@@ -8,7 +8,7 @@ import io.toonformat.toon4s.error.{DecodeError, EncodeError}
  * Sealed trait ensures exhaustive pattern matching at compile time. All subtypes are defined in the
  * same file for compiler safety and to prevent missing cases in pattern matches.
  *
- * ==Design Principles==
+ * ==Design principles==
  *   - Algebraic Data Type (ADT) for type-safe error modeling
  *   - Immutable case classes for error instances
  *   - Optional cause for error chaining

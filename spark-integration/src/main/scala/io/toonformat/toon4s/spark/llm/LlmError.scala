@@ -3,7 +3,7 @@ package io.toonformat.toon4s.spark.llm
 /**
  * LLM error types aligned with llm4s error hierarchy.
  *
- * ==Design Alignment with llm4s==
+ * ==Design alignment with llm4s==
  * Mirrors llm4s's error system:
  *   - Sealed trait hierarchy with 23 error types
  *   - Marker traits for recoverability (`RecoverableError`, `NonRecoverableError`)

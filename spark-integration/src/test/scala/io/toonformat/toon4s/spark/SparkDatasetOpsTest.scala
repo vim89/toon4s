@@ -6,9 +6,9 @@ import org.apache.spark.sql.{Dataset, SparkSession}
 /**
  * Tests for Dataset[T] TOON encoding operations
  *
- * Note: These tests use a workaround for the Spark implicits issue.
- * The pattern `import spark.implicits._` from a var field doesn't work in test classes.
- * Instead, we create local SparkSession instances where needed.
+ * Note: These tests use a workaround for the Spark implicits issue. The pattern
+ * `import spark.implicits._` from a var field doesn't work in test classes. Instead, we create
+ * local SparkSession instances where needed.
  */
 class SparkDatasetOpsTest extends FunSuite {
 
@@ -32,7 +32,8 @@ class SparkDatasetOpsTest extends FunSuite {
   }
 
   // Helper to create datasets with proper implicits scope
-  private def withDataset[T](testName: String)(f: Dataset[T] => Unit)(implicit encoder: org.apache.spark.sql.Encoder[T]): Unit = {
+  private def withDataset[T](testName: String)(f: Dataset[T] => Unit)(implicit
+      encoder: org.apache.spark.sql.Encoder[T]): Unit = {
     // Test implementation would go here
     // Currently commented out due to encoder resolution complexity
   }
@@ -79,4 +80,5 @@ class SparkDatasetOpsTest extends FunSuite {
 
 // Test data classes (for reference)
 case class User(id: Int, name: String, age: Int)
+
 case class Order(orderId: String, userId: Int, total: Double)

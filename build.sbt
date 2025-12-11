@@ -62,7 +62,7 @@ val commonScalacOptions = Seq(
 // The publishTo setting is automatically configured by sbt-ci-release for both snapshots and releases
 
 lazy val root = (project in file("."))
-  .aggregate(core, cli, jmh, compare)
+  .aggregate(core, cli, jmh, compare, sparkIntegration)
   .settings(
     name := "toon4s",
     publish / skip := true,
@@ -158,3 +158,44 @@ addCommandAlias(
   "jmhFull",
   "jmh/jmh:run -i 5 -wi 5 -r 2s -w 2s -f1 -t1 io.toonformat.toon4s.jmh.EncodeDecodeBench.decode_tabular io.toonformat.toon4s.jmh.EncodeDecodeBench.decode_list io.toonformat.toon4s.jmh.EncodeDecodeBench.decode_nested io.toonformat.toon4s.jmh.EncodeDecodeBench.encode_object",
 )
+
+lazy val sparkIntegration = (project in file("spark-integration"))
+  .dependsOn(core)
+  .settings(
+    name := "toon4s-spark",
+    // Override scalaVersion to Scala 2.13 (Spark doesn't support Scala 3)
+    scalaVersion := Scala213Latest,
+    libraryDependencies ++= Seq(
+      "org.apache.spark" %% "spark-sql" % "3.5.0" % Provided,
+      "org.scalameta"    %% "munit"     % "1.2.1" % Test,
+    ),
+    scalacOptions ++= commonScalacOptions,
+    // Cross-build for Spark compatibility (Spark supports Scala 2.12 and 2.13)
+    crossScalaVersions := Seq(Scala213Latest, "2.12.19"),
+    // Fix Spark class loader issues in tests - run tests in forked JVM
+    Test / fork := true,
+    // Add JVM options for Java 17+ compatibility with Spark
+    Test / javaOptions ++= Seq(
+      "--add-opens=java.base/java.lang=ALL-UNNAMED",
+      "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED",
+      "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+      "--add-opens=java.base/java.io=ALL-UNNAMED",
+      "--add-opens=java.base/java.net=ALL-UNNAMED",
+      "--add-opens=java.base/java.nio=ALL-UNNAMED",
+      "--add-opens=java.base/java.util=ALL-UNNAMED",
+      "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
+      "--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED",
+      "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+      "--add-opens=java.base/sun.nio.cs=ALL-UNNAMED",
+      "--add-opens=java.base/sun.security.action=ALL-UNNAMED",
+      "--add-opens=java.base/sun.util.calendar=ALL-UNNAMED"
+    ),
+    // ScalaDoc configuration
+    Compile / doc / scalacOptions ++= Seq(
+      "-groups",
+      "-doc-title",
+      "toon4s-spark",
+      "-doc-version",
+      version.value,
+    ),
+  )

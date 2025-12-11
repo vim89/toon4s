@@ -84,12 +84,12 @@ class LlmClientTest extends FunSuite {
   test("MockLlmClient: context window management") {
     val client = MockLlmClient.alwaysSucceeds
 
-    assertEquals(client.getContextWindow(), 128000)
-    assertEquals(client.getReserveCompletion(), 4096)
+    assertEquals(client.getContextWindow, 128000)
+    assertEquals(client.getReserveCompletion, 4096)
 
     val budget = client.getContextBudget()
     assert(budget.available > 0)
-    assert(budget.available < client.getContextWindow())
+    assert(budget.available < client.getContextWindow)
   }
 
   test("MockLlmClient: backward compatible string API") {

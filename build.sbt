@@ -36,7 +36,12 @@ ThisBuild / scmInfo := Some(
   )
 )
 
-ThisBuild / scalafmtOnCompile := true
+ThisBuild / scalafmtOnCompile := {
+  // scalafmt has issues resolving the config path on Windows CI,
+  // so only run it automatically on non-Windows platforms.
+  val os = sys.props.getOrElse("os.name", "").toLowerCase
+  !os.contains("windows")
+}
 
 ThisBuild / versionScheme := Some("early-semver")
 
@@ -62,7 +67,7 @@ val commonScalacOptions = Seq(
 // The publishTo setting is automatically configured by sbt-ci-release for both snapshots and releases
 
 lazy val root = (project in file("."))
-  .aggregate(core, cli, jmh, compare)
+  .aggregate(core, cli, jmh, sparkIntegration)
   .settings(
     name := "toon4s",
     publish / skip := true,
@@ -134,20 +139,6 @@ lazy val jmh = (project in file("benchmarks-jmh"))
     scalacOptions ++= commonScalacOptions,
   )
 
-lazy val compare = (project in file("compare"))
-  .dependsOn(core)
-  .settings(
-    name := "toon4s-compare",
-    publish / skip := true,
-    scalacOptions ++= commonScalacOptions,
-    libraryDependencies ++= Seq(
-      "com.fasterxml.jackson.core" % "jackson-databind" % "2.20.1"
-    ),
-    Compile / unmanagedJars ++= {
-      sys.env.get("JTOON_JAR").toList.map(file)
-    },
-  )
-
 // sbt aliases for quick vs heavy JMH runs
 addCommandAlias(
   "jmhDev",
@@ -158,3 +149,58 @@ addCommandAlias(
   "jmhFull",
   "jmh/jmh:run -i 5 -wi 5 -r 2s -w 2s -f1 -t1 io.toonformat.toon4s.jmh.EncodeDecodeBench.decode_tabular io.toonformat.toon4s.jmh.EncodeDecodeBench.decode_list io.toonformat.toon4s.jmh.EncodeDecodeBench.decode_nested io.toonformat.toon4s.jmh.EncodeDecodeBench.encode_object",
 )
+
+lazy val sparkIntegration = (project in file("spark-integration"))
+  .dependsOn(core)
+  .enablePlugins(MimaPlugin)
+  .settings(
+    name := "toon4s-spark",
+    // Override scalaVersion to Scala 2.13 (Spark doesn't support Scala 3)
+    scalaVersion := Scala213Latest,
+    libraryDependencies ++= Seq(
+      "org.apache.spark" %% "spark-sql" % "3.5.0" % Provided,
+      "org.scalameta"    %% "munit"     % "1.2.1" % Test,
+    ),
+    scalacOptions ++= commonScalacOptions,
+    // Allow Scala 2.13 compiler to read Scala 3 TASTy from toon4s-core
+    scalacOptions ++= {
+      if (scalaVersion.value.startsWith("2.13")) Seq("-Ytasty-reader") else Seq.empty
+    },
+    // Cross-build for Spark compatibility (Spark supports Scala 2.13)
+    crossScalaVersions := Seq(Scala213Latest),
+    // Fix Spark class loader issues in tests - run tests in forked JVM
+    Test / fork := true,
+    // Add JVM options for Java 17+ compatibility with Spark
+    Test / javaOptions ++= Seq(
+      "--add-opens=java.base/java.lang=ALL-UNNAMED",
+      "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED",
+      "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+      "--add-opens=java.base/java.io=ALL-UNNAMED",
+      "--add-opens=java.base/java.net=ALL-UNNAMED",
+      "--add-opens=java.base/java.nio=ALL-UNNAMED",
+      "--add-opens=java.base/java.util=ALL-UNNAMED",
+      "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
+      "--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED",
+      "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+      "--add-opens=java.base/sun.nio.cs=ALL-UNNAMED",
+      "--add-opens=java.base/sun.security.action=ALL-UNNAMED",
+      "--add-opens=java.base/sun.util.calendar=ALL-UNNAMED"
+    ),
+    // ScalaDoc configuration
+    Compile / doc / scalacOptions ++= Seq(
+      "-groups",
+      "-doc-title",
+      "toon4s-spark",
+      "-doc-version",
+      version.value,
+    ),
+    // MiMa configuration for binary compatibility checking
+    mimaPreviousArtifacts := Set(
+      // Will be uncommented after first release
+      // organization.value %% moduleName.value % "0.1.0"
+    ),
+    // Exclude known binary incompatible changes (add as needed)
+    mimaBinaryIssueFilters := Seq(
+      // Example: ProblemFilters.exclude[Problem]("io.toonformat.toon4s.spark.InternalClass")
+    ),
+  )

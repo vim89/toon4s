@@ -39,7 +39,7 @@ jobs:
         run: sbt clean +compile
 
       - name: binary compatibility check
-        run: sbt clean core/mimaReportBinaryIssues
+        run: sbt clean core/mimaReportBinaryIssues sparkIntegration/mimaReportBinaryIssues
 
   test:
     name: Test
@@ -105,8 +105,12 @@ jobs:
           java-version: 21
           cache: sbt
 
-      - name: Generate core Scaladoc
+      - name: Generate Scaladoc (core)
         run: sbt clean -Dsbt.log.noformat=true core/doc
+
+      - name: Generate Scaladoc (spark-integration)
+        run: sbt -Dsbt.log.noformat=true sparkIntegration/doc
+        continue-on-error: true
 
   smoke:
     name: Smoke Tests

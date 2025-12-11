@@ -5,8 +5,8 @@ import io.toonformat.toon4s.error.{DecodeError, EncodeError}
 /**
  * Root error type for Spark integration failures.
  *
- * Sealed trait ensures exhaustive pattern matching at compile time. All subtypes are defined in
- * the same file for compiler safety and to prevent missing cases in pattern matches.
+ * Sealed trait ensures exhaustive pattern matching at compile time. All subtypes are defined in the
+ * same file for compiler safety and to prevent missing cases in pattern matches.
  *
  * ==Design Principles==
  *   - Algebraic Data Type (ADT) for type-safe error modeling
@@ -36,6 +36,7 @@ sealed trait SparkToonError {
 
   /** Optional underlying cause (for error chaining) */
   def cause: Option[Throwable]
+
 }
 
 object SparkToonError {
@@ -69,7 +70,9 @@ object SparkToonError {
    */
   final case class EncodingError(toonError: EncodeError, cause: Option[Throwable] = None)
       extends SparkToonError {
+
     def message: String = s"TOON encoding failed: ${toonError.getMessage}"
+
   }
 
   /**
@@ -85,7 +88,9 @@ object SparkToonError {
    */
   final case class DecodingError(toonError: DecodeError, cause: Option[Throwable] = None)
       extends SparkToonError {
+
     def message: String = s"TOON decoding failed: ${toonError.getMessage}"
+
   }
 
   /**
@@ -105,11 +110,13 @@ object SparkToonError {
    *   Optional underlying exception
    */
   final case class SchemaMismatch(
-    expected: String,
-    actual: String,
-    cause: Option[Throwable] = None
+      expected: String,
+      actual: String,
+      cause: Option[Throwable] = None,
   ) extends SparkToonError {
+
     def message: String = s"Schema mismatch: expected=$expected, actual=$actual"
+
   }
 
   /**
@@ -143,6 +150,9 @@ object SparkToonError {
    */
   final case class UnsupportedDataType(dataType: String, cause: Option[Throwable] = None)
       extends SparkToonError {
+
     def message: String = s"Unsupported Spark DataType: $dataType"
+
   }
+
 }

@@ -1,5 +1,7 @@
 package io.toonformat.toon4s.spark
 
+import scala.util.Try
+
 import io.toonformat.toon4s.{DecodeOptions, EncodeOptions, Toon}
 import io.toonformat.toon4s.JsonValue._
 import org.apache.spark.sql.SparkSession
@@ -7,14 +9,12 @@ import org.apache.spark.sql.api.java.UDF1
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.udf
 
-import scala.util.Try
-
 /**
  * User-Defined Functions (UDFs) for TOON encoding/decoding in Spark SQL.
  *
  * ==Design==
- * Provides SQL functions that can be used in Spark SQL queries for TOON operations. Registered
- * UDFs are available in both Scala DataFrame API and SQL queries.
+ * Provides SQL functions that can be used in Spark SQL queries for TOON operations. Registered UDFs
+ * are available in both Scala DataFrame API and SQL queries.
  *
  * ==Usage==
  * {{{
@@ -111,7 +111,7 @@ object ToonUDFs {
         // Convert JsonValue to string representation
         // Users should use fromToon for DataFrame-level decoding
         json.toString
-      }
+      },
     )
   }
 
@@ -149,10 +149,10 @@ object ToonUDFs {
       _ => null,
       json => {
         json match {
-          case JString(s) => s
-          case _          => json.toString
+        case JString(s) => s
+        case _          => json.toString
         }
-      }
+      },
     )
   }
 
@@ -175,6 +175,7 @@ object ToonUDFs {
 
   // Helper for Java interop
   import scala.util.Try
+
 }
 
 /**
@@ -202,27 +203,24 @@ object ToonBatchUDFs {
     }
   }
 
-  /**
-   * Decode TOON array to Seq of strings.
-   */
+  /** Decode TOON array to Seq of strings. */
   val decodeArrayUDF: UserDefinedFunction = udf { (toon: String) =>
     Toon.decode(toon, DecodeOptions()).fold(
       _ => Seq.empty[String],
       json => {
         json match {
-          case JArray(values) =>
-            values.collect { case JString(s) => s }
-          case _ => Seq.empty[String]
+        case JArray(values) =>
+          values.collect { case JString(s) => s }
+        case _ => Seq.empty[String]
         }
-      }
+      },
     )
   }
 
-  /**
-   * Register batch UDFs.
-   */
+  /** Register batch UDFs. */
   def register(spark: SparkSession, prefix: String = "toon_"): Unit = {
     spark.udf.register(s"${prefix}encode_array", encodeArrayUDF)
     spark.udf.register(s"${prefix}decode_array", decodeArrayUDF)
   }
+
 }

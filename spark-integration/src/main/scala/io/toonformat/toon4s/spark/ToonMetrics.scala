@@ -33,11 +33,11 @@ package io.toonformat.toon4s.spark
  *   Number of columns in DataFrame
  */
 final case class ToonMetrics(
-  jsonTokenCount: Int,
-  toonTokenCount: Int,
-  savingsPercent: Double,
-  rowCount: Int,
-  columnCount: Int
+    jsonTokenCount: Int,
+    toonTokenCount: Int,
+    savingsPercent: Double,
+    rowCount: Int,
+    columnCount: Int,
 ) {
 
   /**
@@ -69,9 +69,7 @@ final case class ToonMetrics(
     (absoluteSavings.toDouble / 1000.0) * costPer1kTokens
   }
 
-  /**
-   * Human-readable summary string.
-   */
+  /** Human-readable summary string. */
   def summary: String = {
     f"""ToonMetrics(
        |  rows=$rowCount, columns=$columnCount
@@ -93,6 +91,7 @@ final case class ToonMetrics(
   def hasMeaningfulSavings(threshold: Double = 10.0): Boolean = {
     savingsPercent >= threshold
   }
+
 }
 
 object ToonMetrics {
@@ -100,8 +99,8 @@ object ToonMetrics {
   /**
    * Token estimation strategy.
    *
-   * Uses approximate GPT-style tokenization (4 characters per token). This is a rough estimate;
-   * for exact counts, integrate with tiktoken or similar.
+   * Uses approximate GPT-style tokenization (4 characters per token). This is a rough estimate; for
+   * exact counts, integrate with tiktoken or similar.
    */
   def estimateTokens(text: String): Int = {
     if (text.isEmpty) 0
@@ -123,10 +122,10 @@ object ToonMetrics {
    *   ToonMetrics comparing the two encodings
    */
   def fromEncodedStrings(
-    jsonEncoded: String,
-    toonEncoded: String,
-    rowCount: Int,
-    columnCount: Int
+      jsonEncoded: String,
+      toonEncoded: String,
+      rowCount: Int,
+      columnCount: Int,
   ): ToonMetrics = {
     val jsonTokens = estimateTokens(jsonEncoded)
     val toonTokens = estimateTokens(toonEncoded)
@@ -139,19 +138,17 @@ object ToonMetrics {
       toonTokenCount = toonTokens,
       savingsPercent = savings,
       rowCount = rowCount,
-      columnCount = columnCount
+      columnCount = columnCount,
     )
   }
 
-  /**
-   * Zero metrics (no data).
-   */
+  /** Zero metrics (no data). */
   val empty: ToonMetrics = ToonMetrics(
     jsonTokenCount = 0,
     toonTokenCount = 0,
     savingsPercent = 0.0,
     rowCount = 0,
-    columnCount = 0
+    columnCount = 0,
   )
 
   /**
@@ -179,8 +176,9 @@ object ToonMetrics {
         toonTokenCount = totalToonTokens,
         savingsPercent = savings,
         rowCount = totalRows,
-        columnCount = avgColumns
+        columnCount = avgColumns,
       )
     }
   }
+
 }

@@ -32,7 +32,7 @@ class ToonMetricsTest extends FunSuite {
       jsonEncoded = jsonEncoded,
       toonEncoded = toonEncoded,
       rowCount = 1,
-      columnCount = 3
+      columnCount = 3,
     )
 
     assert(metrics.jsonTokenCount > 0)
@@ -47,7 +47,7 @@ class ToonMetricsTest extends FunSuite {
       toonTokenCount = 60,
       savingsPercent = 0.0, // Will be calculated
       rowCount = 10,
-      columnCount = 5
+      columnCount = 5,
     )
 
     val expected = ((100 - 60).toDouble / 100) * 100 // 40%
@@ -60,7 +60,7 @@ class ToonMetricsTest extends FunSuite {
       toonTokenCount = 70,
       savingsPercent = 30.0,
       rowCount = 10,
-      columnCount = 5
+      columnCount = 5,
     )
 
     assertEquals(metrics.absoluteSavings, 30)
@@ -72,7 +72,7 @@ class ToonMetricsTest extends FunSuite {
       toonTokenCount = 50,
       savingsPercent = 50.0,
       rowCount = 10,
-      columnCount = 5
+      columnCount = 5,
     )
 
     assertEquals(metrics.compressionRatio, 0.5, 0.001)
@@ -84,7 +84,7 @@ class ToonMetricsTest extends FunSuite {
       toonTokenCount = 6000,
       savingsPercent = 40.0,
       rowCount = 100,
-      columnCount = 10
+      columnCount = 10,
     )
 
     val savings = metrics.estimatedCostSavings()
@@ -99,7 +99,7 @@ class ToonMetricsTest extends FunSuite {
       toonTokenCount = 6000,
       savingsPercent = 40.0,
       rowCount = 100,
-      columnCount = 10
+      columnCount = 10,
     )
 
     val savings = metrics.estimatedCostSavings(costPer1kTokens = 0.01)
@@ -113,7 +113,7 @@ class ToonMetricsTest extends FunSuite {
       toonTokenCount = 70,
       savingsPercent = 30.0,
       rowCount = 10,
-      columnCount = 5
+      columnCount = 5,
     )
 
     assert(metrics.hasMeaningfulSavings(threshold = 10.0))
@@ -126,7 +126,7 @@ class ToonMetricsTest extends FunSuite {
       toonTokenCount = 95,
       savingsPercent = 5.0,
       rowCount = 10,
-      columnCount = 5
+      columnCount = 5,
     )
 
     assert(!metrics.hasMeaningfulSavings(threshold = 10.0))
@@ -139,7 +139,7 @@ class ToonMetricsTest extends FunSuite {
       toonTokenCount = 600,
       savingsPercent = 40.0,
       rowCount = 50,
-      columnCount = 8
+      columnCount = 8,
     )
 
     val summary = metrics.summary
@@ -158,7 +158,7 @@ class ToonMetricsTest extends FunSuite {
       toonTokenCount = 0,
       savingsPercent = 0.0,
       rowCount = 0,
-      columnCount = 0
+      columnCount = 0,
     )
 
     assertEquals(metrics.absoluteSavings, 0)
@@ -172,11 +172,12 @@ class ToonMetricsTest extends FunSuite {
       toonTokenCount = 120,
       savingsPercent = -20.0,
       rowCount = 5,
-      columnCount = 3
+      columnCount = 3,
     )
 
     assertEquals(metrics.absoluteSavings, -20)
     assert(!metrics.hasMeaningfulSavings())
     assert(metrics.compressionRatio > 1.0)
   }
+
 }

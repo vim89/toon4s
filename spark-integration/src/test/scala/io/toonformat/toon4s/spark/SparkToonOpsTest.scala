@@ -1,12 +1,12 @@
 package io.toonformat.toon4s.spark
 
+import scala.jdk.CollectionConverters._
+
+import SparkToonOps._
 import io.toonformat.toon4s.{DecodeOptions, EncodeOptions}
 import munit.FunSuite
-import org.apache.spark.sql.{SparkSession, Row}
+import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.types._
-import SparkToonOps._
-
-import scala.jdk.CollectionConverters._
 
 class SparkToonOpsTest extends FunSuite {
 
@@ -32,12 +32,12 @@ class SparkToonOpsTest extends FunSuite {
     val schema = StructType(Seq(
       StructField("id", IntegerType),
       StructField("name", StringType),
-      StructField("age", IntegerType)
+      StructField("age", IntegerType),
     ))
 
     val data = Seq(
       Row(1, "Alice", 25),
-      Row(2, "Bob", 30)
+      Row(2, "Bob", 30),
     )
 
     val df = spark.createDataFrame(data.asJava, schema)
@@ -58,15 +58,13 @@ class SparkToonOpsTest extends FunSuite {
     val result = df.toToon()
 
     assert(result.isRight)
-    result.foreach { chunks =>
-      assertEquals(chunks.size, 1)
-    }
+    result.foreach(chunks => assertEquals(chunks.size, 1))
   }
 
   test("toToon: chunk large DataFrame") {
     val schema = StructType(Seq(
       StructField("id", IntegerType),
-      StructField("name", StringType)
+      StructField("name", StringType),
     ))
 
     val data = (1 to 250).map(i => Row(i, s"user$i"))
@@ -83,12 +81,12 @@ class SparkToonOpsTest extends FunSuite {
   test("toonMetrics: compute token metrics") {
     val schema = StructType(Seq(
       StructField("id", IntegerType),
-      StructField("name", StringType)
+      StructField("name", StringType),
     ))
 
     val data = Seq(
       Row(1, "Alice"),
-      Row(2, "Bob")
+      Row(2, "Bob"),
     )
 
     val df = spark.createDataFrame(data.asJava, schema)
@@ -107,13 +105,13 @@ class SparkToonOpsTest extends FunSuite {
     val schema = StructType(Seq(
       StructField("id", IntegerType),
       StructField("name", StringType),
-      StructField("score", DoubleType)
+      StructField("score", DoubleType),
     ))
 
     val data = Seq(
       Row(1, "value1", 100.0),
       Row(2, "value2", 200.0),
-      Row(3, "value3", 300.0)
+      Row(3, "value3", 300.0),
     )
 
     val df = spark.createDataFrame(data.asJava, schema)
@@ -130,12 +128,12 @@ class SparkToonOpsTest extends FunSuite {
     val schema = StructType(Seq(
       StructField("id", IntegerType),
       StructField("name", StringType),
-      StructField("score", DoubleType)
+      StructField("score", DoubleType),
     ))
 
     val data = Seq(
       Row(1, "Alice", 25.5),
-      Row(2, "Bob", 30.0)
+      Row(2, "Bob", 30.0),
     )
 
     val originalDf = spark.createDataFrame(data.asJava, schema)
@@ -158,13 +156,13 @@ class SparkToonOpsTest extends FunSuite {
     val schema = StructType(Seq(
       StructField("id", IntegerType),
       StructField("name", StringType),
-      StructField("active", BooleanType)
+      StructField("active", BooleanType),
     ))
 
     val data = Seq(
       Row(1, "Alice", true),
       Row(2, "Bob", false),
-      Row(3, "Charlie", true)
+      Row(3, "Charlie", true),
     )
 
     val originalDf = spark.createDataFrame(data.asJava, schema)
@@ -185,12 +183,12 @@ class SparkToonOpsTest extends FunSuite {
     val schema = StructType(Seq(
       StructField("id", IntegerType),
       StructField("name", StringType),
-      StructField("tags", ArrayType(StringType))
+      StructField("tags", ArrayType(StringType)),
     ))
 
     val data = Seq(
       Row(1, "Alice", Seq("tag1", "tag2").asJava),
-      Row(2, "Bob", Seq("tag3").asJava)
+      Row(2, "Bob", Seq("tag3").asJava),
     )
 
     val df = spark.createDataFrame(data.asJava, schema)
@@ -207,7 +205,7 @@ class SparkToonOpsTest extends FunSuite {
     val schema = StructType(Seq(
       StructField("id", IntegerType),
       StructField("name", StringType),
-      StructField("score", DoubleType)
+      StructField("score", DoubleType),
     ))
 
     val data = (1 to 1000).map(i => Row(i, s"user$i", i * 10.0))
@@ -221,4 +219,5 @@ class SparkToonOpsTest extends FunSuite {
       assert(metrics.jsonTokenCount > metrics.toonTokenCount)
     }
   }
+
 }

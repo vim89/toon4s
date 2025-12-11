@@ -1,14 +1,14 @@
 package io.toonformat.toon4s.spark
 
+import scala.collection.immutable.VectorMap
+import scala.util.{Failure, Success, Try}
+
 import io.toonformat.toon4s.{DecodeOptions, EncodeOptions, Toon}
 import io.toonformat.toon4s.JsonValue
 import io.toonformat.toon4s.JsonValue._
 import io.toonformat.toon4s.spark.error.SparkToonError
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.types.StructType
-
-import scala.collection.immutable.VectorMap
-import scala.util.{Failure, Success, Try}
 
 /**
  * Extension methods for DataFrame ↔ TOON conversion.
@@ -57,8 +57,8 @@ object SparkToonOps {
     /**
      * Encode DataFrame to TOON format with chunking.
      *
-     * Pure function with explicit error channel (Either). Supports chunking for large DataFrames
-     * to avoid driver memory pressure.
+     * Pure function with explicit error channel (Either). Supports chunking for large DataFrames to
+     * avoid driver memory pressure.
      *
      * @param key
      *   Top-level key for TOON document (e.g., "users", "events")
@@ -82,9 +82,9 @@ object SparkToonOps {
      *   }}}
      */
     def toToon(
-      key: String = "data",
-      maxRowsPerChunk: Int = 1000,
-      options: EncodeOptions = EncodeOptions()
+        key: String = "data",
+        maxRowsPerChunk: Int = 1000,
+        options: EncodeOptions = EncodeOptions(),
     ): Either[SparkToonError, Vector[String]] = {
 
       // Step 1: Collect rows (driver memory consideration)
@@ -103,8 +103,8 @@ object SparkToonOps {
     /**
      * Compute token metrics comparing JSON vs TOON.
      *
-     * Measures token count for both JSON and TOON encodings, computing savings percentage.
-     * Useful for cost analysis and optimization decisions.
+     * Measures token count for both JSON and TOON encodings, computing savings percentage. Useful
+     * for cost analysis and optimization decisions.
      *
      * @param key
      *   Top-level key for TOON document
@@ -127,8 +127,8 @@ object SparkToonOps {
      *   }}}
      */
     def toonMetrics(
-      key: String = "data",
-      options: EncodeOptions = EncodeOptions()
+        key: String = "data",
+        options: EncodeOptions = EncodeOptions(),
     ): Either[SparkToonError, ToonMetrics] = {
 
       val rowsResult = collectSafe(df)
@@ -147,7 +147,7 @@ object SparkToonOps {
             jsonEncoded = jsonStr,
             toonEncoded = toonStr,
             rowCount = rows.length,
-            columnCount = schema.fields.length
+            columnCount = schema.fields.length,
           )
         }
       }
@@ -164,12 +164,14 @@ object SparkToonOps {
     def showToonSample(n: Int = 5): Unit = {
       df.limit(n).toToon(maxRowsPerChunk = n).fold(
         error => println(s"Error: ${error.message}"),
-        toon => toon.headOption.foreach { t =>
-          println(s"TOON Sample ($n rows):")
-          println(t)
-        }
+        toon =>
+          toon.headOption.foreach { t =>
+            println(s"TOON Sample ($n rows):")
+            println(t)
+          },
       )
     }
+
   }
 
   /**
@@ -206,15 +208,13 @@ object SparkToonOps {
    *   }}}
    */
   def fromToon(
-    toonDocuments: Vector[String],
-    schema: StructType,
-    options: DecodeOptions = DecodeOptions()
+      toonDocuments: Vector[String],
+      schema: StructType,
+      options: DecodeOptions = DecodeOptions(),
   )(implicit spark: SparkSession): Either[SparkToonError, DataFrame] = {
 
     // Step 1: Decode all TOON documents
-    val decodedResults = toonDocuments.map { toon =>
-      decodeSafe(toon, options)
-    }
+    val decodedResults = toonDocuments.map(toon => decodeSafe(toon, options))
 
     // Step 2: Sequence Either values (short-circuit on first error)
     sequence(decodedResults).flatMap { jsonValues =>
@@ -226,7 +226,7 @@ object SparkToonOps {
         // Step 5: Create DataFrame
         spark.createDataFrame(
           spark.sparkContext.parallelize(sparkRows),
-          schema
+          schema,
         )
       }
     }
@@ -243,50 +243,40 @@ object SparkToonOps {
     Try(df.collect()).toEither.left.map { ex =>
       SparkToonError.CollectionError(
         s"Failed to collect DataFrame rows: ${ex.getMessage}",
-        Some(ex)
+        Some(ex),
       )
     }
   }
 
-  /**
-   * Convert Spark Rows to JsonValue array.
-   */
+  /** Convert Spark Rows to JsonValue array. */
   private def convertRowsToJsonArray(
-    rows: Array[Row],
-    schema: StructType
+      rows: Array[Row],
+      schema: StructType,
   ): Either[SparkToonError, JArray] = {
 
     // Convert each row, short-circuiting on first error
-    val jsonResults = rows.map { row =>
-      SparkJsonInterop.rowToJsonValueSafe(row, schema)
-    }
+    val jsonResults = rows.map(row => SparkJsonInterop.rowToJsonValueSafe(row, schema))
 
     sequence(jsonResults.toVector).map(JArray.apply)
   }
 
-  /**
-   * Convert JsonValue rows to Spark Rows.
-   */
+  /** Convert JsonValue rows to Spark Rows. */
   private def convertToSparkRows(
-    rows: Vector[JsonValue],
-    schema: StructType
+      rows: Vector[JsonValue],
+      schema: StructType,
   ): Either[SparkToonError, Vector[Row]] = {
 
-    val rowResults = rows.map { json =>
-      SparkJsonInterop.jsonValueToRowSafe(json, schema)
-    }
+    val rowResults = rows.map(json => SparkJsonInterop.jsonValueToRowSafe(json, schema))
 
     sequence(rowResults)
   }
 
-  /**
-   * Encode JsonValue array in chunks.
-   */
+  /** Encode JsonValue array in chunks. */
   private def encodeChunks(
-    jsonArray: JArray,
-    key: String,
-    maxRowsPerChunk: Int,
-    options: EncodeOptions
+      jsonArray: JArray,
+      key: String,
+      maxRowsPerChunk: Int,
+      options: EncodeOptions,
   ): Either[SparkToonError, Vector[String]] = {
 
     val chunks = jsonArray.value.grouped(maxRowsPerChunk).toVector
@@ -300,28 +290,20 @@ object SparkToonOps {
     sequence(chunkResults)
   }
 
-  /**
-   * Safely encode JsonValue to TOON.
-   */
+  /** Safely encode JsonValue to TOON. */
   private def encodeSafe(
-    json: JsonValue,
-    options: EncodeOptions
+      json: JsonValue,
+      options: EncodeOptions,
   ): Either[SparkToonError, String] = {
-    Toon.encode(json, options).left.map { err =>
-      SparkToonError.EncodingError(err)
-    }
+    Toon.encode(json, options).left.map(err => SparkToonError.EncodingError(err))
   }
 
-  /**
-   * Safely decode TOON string to JsonValue.
-   */
+  /** Safely decode TOON string to JsonValue. */
   private def decodeSafe(
-    toon: String,
-    options: DecodeOptions
+      toon: String,
+      options: DecodeOptions,
   ): Either[SparkToonError, JsonValue] = {
-    Toon.decode(toon, options).left.map { err =>
-      SparkToonError.DecodingError(err)
-    }
+    Toon.decode(toon, options).left.map(err => SparkToonError.DecodingError(err))
   }
 
   /**
@@ -361,4 +343,5 @@ object SparkToonOps {
       case (_, Left(err))             => Left(err)
     }
   }
+
 }

@@ -1,12 +1,12 @@
 package io.toonformat.toon4s.spark
 
+import scala.collection.immutable.VectorMap
+
 import io.toonformat.toon4s.JsonValue
 import io.toonformat.toon4s.JsonValue._
 import munit.FunSuite
 import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.types._
-
-import scala.collection.immutable.VectorMap
 
 class SparkJsonInteropTest extends FunSuite {
 
@@ -32,32 +32,38 @@ class SparkJsonInteropTest extends FunSuite {
     val schema = StructType(Seq(
       StructField("id", IntegerType),
       StructField("name", StringType),
-      StructField("active", BooleanType)
+      StructField("active", BooleanType),
     ))
 
     val row = Row(1, "Alice", true)
     val json = SparkJsonInterop.rowToJsonValue(row, schema)
 
-    assertEquals(json, JObj(VectorMap(
-      "id" -> JNumber(BigDecimal(1)),
-      "name" -> JString("Alice"),
-      "active" -> JBool(true)
-    )))
+    assertEquals(
+      json,
+      JObj(VectorMap(
+        "id" -> JNumber(BigDecimal(1)),
+        "name" -> JString("Alice"),
+        "active" -> JBool(true),
+      )),
+    )
   }
 
   test("rowToJsonValue: handle null values") {
     val schema = StructType(Seq(
       StructField("name", StringType),
-      StructField("age", IntegerType)
+      StructField("age", IntegerType),
     ))
 
     val row = Row("Bob", null)
     val json = SparkJsonInterop.rowToJsonValue(row, schema)
 
-    assertEquals(json, JObj(VectorMap(
-      "name" -> JString("Bob"),
-      "age" -> JNull
-    )))
+    assertEquals(
+      json,
+      JObj(VectorMap(
+        "name" -> JString("Bob"),
+        "age" -> JNull,
+      )),
+    )
   }
 
   test("rowToJsonValue: handle numeric types") {
@@ -65,41 +71,41 @@ class SparkJsonInteropTest extends FunSuite {
       StructField("int_val", IntegerType),
       StructField("long_val", LongType),
       StructField("double_val", DoubleType),
-      StructField("float_val", FloatType)
+      StructField("float_val", FloatType),
     ))
 
-    val row = Row(42, 100L, 3.14, 2.71f)
+    val row = Row(42, 100L, 3.14, 2.71F)
     val json = SparkJsonInterop.rowToJsonValue(row, schema)
 
     json match {
-      case JObj(fields) =>
-        assertEquals(fields("int_val"), JNumber(BigDecimal(42)))
-        assertEquals(fields("long_val"), JNumber(BigDecimal(100)))
-        assert(fields("double_val").isInstanceOf[JNumber])
-        assert(fields("float_val").isInstanceOf[JNumber])
-      case _ => fail("Expected JObj")
+    case JObj(fields) =>
+      assertEquals(fields("int_val"), JNumber(BigDecimal(42)))
+      assertEquals(fields("long_val"), JNumber(BigDecimal(100)))
+      assert(fields("double_val").isInstanceOf[JNumber])
+      assert(fields("float_val").isInstanceOf[JNumber])
+    case _ => fail("Expected JObj")
     }
   }
 
   test("rowToJsonValue: handle nested struct") {
     val innerSchema = StructType(Seq(
       StructField("city", StringType),
-      StructField("zip", IntegerType)
+      StructField("zip", IntegerType),
     ))
 
     val schema = StructType(Seq(
       StructField("name", StringType),
-      StructField("address", innerSchema)
+      StructField("address", innerSchema),
     ))
 
     val row = Row("Alice", Row("NYC", 10001))
     val json = SparkJsonInterop.rowToJsonValue(row, schema)
 
     json match {
-      case JObj(fields) =>
-        assertEquals(fields("name"), JString("Alice"))
-        assert(fields("address").isInstanceOf[JObj])
-      case _ => fail("Expected JObj")
+    case JObj(fields) =>
+      assertEquals(fields("name"), JString("Alice"))
+      assert(fields("address").isInstanceOf[JObj])
+    case _ => fail("Expected JObj")
     }
   }
 
@@ -112,25 +118,28 @@ class SparkJsonInteropTest extends FunSuite {
     val json = SparkJsonInterop.rowToJsonValue(row, schema)
 
     json match {
-      case JObj(fields) =>
-        assertEquals(fields("tags"), JArray(Vector(
+    case JObj(fields) =>
+      assertEquals(
+        fields("tags"),
+        JArray(Vector(
           JString("scala"),
           JString("spark"),
-          JString("toon")
-        )))
-      case _ => fail("Expected JObj")
+          JString("toon"),
+        )),
+      )
+    case _ => fail("Expected JObj")
     }
   }
 
   test("jsonValueToRow: convert simple json") {
     val schema = StructType(Seq(
       StructField("id", IntegerType),
-      StructField("name", StringType)
+      StructField("name", StringType),
     ))
 
     val json = JObj(VectorMap(
       "id" -> JNumber(BigDecimal(1)),
-      "name" -> JString("Alice")
+      "name" -> JString("Alice"),
     ))
 
     val row = SparkJsonInterop.jsonValueToRow(json, schema)
@@ -142,12 +151,12 @@ class SparkJsonInteropTest extends FunSuite {
     val schema = StructType(Seq(
       StructField("id", IntegerType),
       StructField("name", StringType),
-      StructField("age", IntegerType)
+      StructField("age", IntegerType),
     ))
 
     val json = JObj(VectorMap(
       "id" -> JNumber(BigDecimal(1)),
-      "name" -> JString("Alice")
+      "name" -> JString("Alice"),
     ))
 
     val row = SparkJsonInterop.jsonValueToRow(json, schema)
@@ -184,7 +193,7 @@ class SparkJsonInteropTest extends FunSuite {
     val schema = StructType(Seq(
       StructField("id", IntegerType),
       StructField("name", StringType),
-      StructField("score", DoubleType)
+      StructField("score", DoubleType),
     ))
 
     val originalRow = Row(42, "test", 95.5)
@@ -195,4 +204,5 @@ class SparkJsonInteropTest extends FunSuite {
     assertEquals(reconstructedRow.getString(1), "test")
     assertEquals(reconstructedRow.getDouble(2), 95.5, 0.0001)
   }
+
 }

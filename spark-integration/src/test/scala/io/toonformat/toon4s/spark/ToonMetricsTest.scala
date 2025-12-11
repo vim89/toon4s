@@ -45,7 +45,6 @@ class ToonMetricsTest extends FunSuite {
     val metrics = ToonMetrics(
       jsonTokenCount = 100,
       toonTokenCount = 60,
-      savingsPercent = 0.0, // Will be calculated
       rowCount = 10,
       columnCount = 5,
     )
@@ -58,7 +57,6 @@ class ToonMetricsTest extends FunSuite {
     val metrics = ToonMetrics(
       jsonTokenCount = 100,
       toonTokenCount = 70,
-      savingsPercent = 30.0,
       rowCount = 10,
       columnCount = 5,
     )
@@ -70,7 +68,6 @@ class ToonMetricsTest extends FunSuite {
     val metrics = ToonMetrics(
       jsonTokenCount = 100,
       toonTokenCount = 50,
-      savingsPercent = 50.0,
       rowCount = 10,
       columnCount = 5,
     )
@@ -82,7 +79,6 @@ class ToonMetricsTest extends FunSuite {
     val metrics = ToonMetrics(
       jsonTokenCount = 10000,
       toonTokenCount = 6000,
-      savingsPercent = 40.0,
       rowCount = 100,
       columnCount = 10,
     )
@@ -97,7 +93,6 @@ class ToonMetricsTest extends FunSuite {
     val metrics = ToonMetrics(
       jsonTokenCount = 10000,
       toonTokenCount = 6000,
-      savingsPercent = 40.0,
       rowCount = 100,
       columnCount = 10,
     )
@@ -111,7 +106,6 @@ class ToonMetricsTest extends FunSuite {
     val metrics = ToonMetrics(
       jsonTokenCount = 100,
       toonTokenCount = 70,
-      savingsPercent = 30.0,
       rowCount = 10,
       columnCount = 5,
     )
@@ -124,7 +118,6 @@ class ToonMetricsTest extends FunSuite {
     val metrics = ToonMetrics(
       jsonTokenCount = 100,
       toonTokenCount = 95,
-      savingsPercent = 5.0,
       rowCount = 10,
       columnCount = 5,
     )
@@ -137,7 +130,6 @@ class ToonMetricsTest extends FunSuite {
     val metrics = ToonMetrics(
       jsonTokenCount = 1000,
       toonTokenCount = 600,
-      savingsPercent = 40.0,
       rowCount = 50,
       columnCount = 8,
     )
@@ -156,21 +148,19 @@ class ToonMetricsTest extends FunSuite {
     val metrics = ToonMetrics(
       jsonTokenCount = 0,
       toonTokenCount = 0,
-      savingsPercent = 0.0,
       rowCount = 0,
       columnCount = 0,
     )
 
     assertEquals(metrics.absoluteSavings, 0)
-    // Compression ratio would be NaN or Infinity, handle gracefully
-    assert(metrics.compressionRatio.isNaN || metrics.compressionRatio.isInfinity)
+    assertEquals(metrics.savingsPercent, 0.0)
+    assertEquals(metrics.compressionRatio, 1.0) // We handle 0/0 as 1.0 in the def
   }
 
   test("no savings: TOON larger than JSON") {
     val metrics = ToonMetrics(
       jsonTokenCount = 100,
       toonTokenCount = 120,
-      savingsPercent = -20.0,
       rowCount = 5,
       columnCount = 3,
     )

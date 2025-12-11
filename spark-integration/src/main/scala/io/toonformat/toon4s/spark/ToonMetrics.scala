@@ -25,8 +25,6 @@ package io.toonformat.toon4s.spark
  *   Estimated token count for JSON encoding
  * @param toonTokenCount
  *   Estimated token count for TOON encoding
- * @param savingsPercent
- *   Percentage reduction (positive = TOON saves tokens)
  * @param rowCount
  *   Number of rows in DataFrame
  * @param columnCount
@@ -35,14 +33,16 @@ package io.toonformat.toon4s.spark
 final case class ToonMetrics(
     jsonTokenCount: Int,
     toonTokenCount: Int,
-    var savingsPercent: Double,
     rowCount: Int,
     columnCount: Int,
 ) {
 
-  // Normalize savingsPercent from token counts so callers don't need
-  // to compute it themselves.
-  savingsPercent =
+  /**
+   * Percentage reduction (positive = TOON saves tokens).
+   *
+   * Computed from token counts to ensure consistency.
+   */
+  def savingsPercent: Double =
     if (jsonTokenCount == 0) 0.0
     else ((jsonTokenCount - toonTokenCount).toDouble / jsonTokenCount.toDouble) * 100.0
 
@@ -59,7 +59,8 @@ final case class ToonMetrics(
    * Values < 1.0 indicate compression. Example: 0.5 means TOON is 50% the size of JSON.
    */
   def compressionRatio: Double = {
-    toonTokenCount.toDouble / jsonTokenCount.toDouble
+    if (jsonTokenCount == 0) 1.0
+    else toonTokenCount.toDouble / jsonTokenCount.toDouble
   }
 
   /**
@@ -100,28 +101,6 @@ final case class ToonMetrics(
 }
 
 object ToonMetrics {
-
-  /**
-   * Smart constructor that keeps savingsPercent consistent with token counts.
-   *
-   * The savingsPercent argument is ignored and recomputed from jsonTokenCount/toonTokenCount so
-   * that callers don't need to do the math themselves.
-   */
-  def apply(
-      jsonTokenCount: Int,
-      toonTokenCount: Int,
-      savingsPercent: Double,
-      rowCount: Int,
-      columnCount: Int,
-  ): ToonMetrics = {
-    new ToonMetrics(
-      jsonTokenCount = jsonTokenCount,
-      toonTokenCount = toonTokenCount,
-      savingsPercent = savingsPercent,
-      rowCount = rowCount,
-      columnCount = columnCount,
-    )
-  }
 
   /**
    * Token estimation strategy.
@@ -168,14 +147,9 @@ object ToonMetrics {
         val capped = (jsonTokens * 0.8).toInt.max(1)
         math.min(toonEstimate, capped)
       }
-    val savings =
-      if (jsonTokens == 0) 0.0
-      else ((jsonTokens - toonTokens).toDouble / jsonTokens) * 100.0
-
     ToonMetrics(
       jsonTokenCount = jsonTokens,
       toonTokenCount = toonTokens,
-      savingsPercent = savings,
       rowCount = rowCount,
       columnCount = columnCount,
     )
@@ -185,7 +159,6 @@ object ToonMetrics {
   val empty: ToonMetrics = ToonMetrics(
     jsonTokenCount = 0,
     toonTokenCount = 0,
-    savingsPercent = 0.0,
     rowCount = 0,
     columnCount = 0,
   )
@@ -206,14 +179,9 @@ object ToonMetrics {
       val totalRows = metrics.map(_.rowCount).sum
       val avgColumns = metrics.map(_.columnCount).sum / metrics.length
 
-      val savings =
-        if (totalJsonTokens == 0) 0.0
-        else ((totalJsonTokens - totalToonTokens).toDouble / totalJsonTokens) * 100.0
-
       ToonMetrics(
         jsonTokenCount = totalJsonTokens,
         toonTokenCount = totalToonTokens,
-        savingsPercent = savings,
         rowCount = totalRows,
         columnCount = avgColumns,
       )

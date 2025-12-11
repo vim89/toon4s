@@ -93,17 +93,10 @@ object SparkToonOps {
       // Step 2: Convert to JsonValue
       rowsResult.flatMap { rows =>
         val schema = df.schema
-        convertRowsToJsonArray(rows, schema)
-          .left
-          .map { err =>
-            // Debugging hook to surface conversion issues during tests
-            println(s"[SparkToonOps.toToon] Conversion error: ${err.message}")
-            err
-          }
-          .flatMap { jsonArray =>
-            // Step 3: Chunk and encode
-            encodeChunks(jsonArray, key, maxRowsPerChunk, options)
-          }
+        convertRowsToJsonArray(rows, schema).flatMap { jsonArray =>
+          // Step 3: Chunk and encode
+          encodeChunks(jsonArray, key, maxRowsPerChunk, options)
+        }
       }
     }
 
@@ -150,19 +143,12 @@ object SparkToonOps {
           val jsonBaseline = encodeAsJson(wrapped)
 
           encodeSafe(wrapped, options).map { toonStr =>
-            val jsonLen = jsonBaseline.length
-            val toonLen = toonStr.length
-            val metrics = ToonMetrics.fromEncodedStrings(
+            ToonMetrics.fromEncodedStrings(
               jsonEncoded = jsonBaseline,
               toonEncoded = toonStr,
               rowCount = rows.length,
               columnCount = schema.fields.length,
             )
-            // Debugging hook to surface metrics during tests
-            println(
-              s"[SparkToonOps.toonMetrics] rows=${rows.length}, cols=${schema.fields.length}, jsonLen=$jsonLen, toonLen=$toonLen, jsonTokens=${metrics.jsonTokenCount}, toonTokens=${metrics.toonTokenCount}, savings=${metrics.savingsPercent}%.2f"
-            )
-            metrics
           }
         }
       }

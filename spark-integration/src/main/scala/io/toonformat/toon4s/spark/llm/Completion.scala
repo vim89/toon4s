@@ -159,7 +159,7 @@ sealed trait HeadroomPercent {
 
 object HeadroomPercent {
 
-  case object None extends HeadroomPercent { val value = 0.0 }
+  case object NoHeadroom extends HeadroomPercent { val value = 0.0 }
 
   case object Low extends HeadroomPercent { val value = 0.05 }
 

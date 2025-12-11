@@ -192,7 +192,7 @@ class LlmClientTest extends FunSuite {
   }
 
   test("HeadroomPercent: values") {
-    assertEquals(HeadroomPercent.None.value, 0.0)
+    assertEquals(HeadroomPercent.NoHeadroom.value, 0.0)
     assertEquals(HeadroomPercent.Low.value, 0.05)
     assertEquals(HeadroomPercent.Standard.value, 0.10)
     assertEquals(HeadroomPercent.High.value, 0.20)

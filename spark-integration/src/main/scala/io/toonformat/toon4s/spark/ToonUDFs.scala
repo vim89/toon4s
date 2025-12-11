@@ -173,9 +173,6 @@ object ToonUDFs {
     else ToonMetrics.estimateTokens(text)
   }
 
-  // Helper for Java interop
-  import scala.util.Try
-
 }
 
 /**

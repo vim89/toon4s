@@ -73,7 +73,8 @@ object SparkJsonInterop {
    * Convert Spark field value to JsonValue.
    *
    * Uses exhaustive pattern matching on DataType for type-safe conversion. Handles nested
-   * structures recursively.
+   * structures recursively. Unsupported types (e.g., CalendarIntervalType, UserDefinedType) are
+   * converted to string representations using toString as a best-effort fallback.
    *
    * @param value
    *   The value from Spark Row
@@ -81,9 +82,6 @@ object SparkJsonInterop {
    *   Spark DataType for the field
    * @return
    *   Corresponding JsonValue
-   *
-   * @throws SparkToonError.UnsupportedDataType
-   *   for unhandled data types
    */
   private def fieldToJsonValue(value: Any, dataType: DataType): JsonValue = dataType match {
   // ========== Primitive Types ==========

@@ -1,5 +1,61 @@
 # Changelog
 
+## [0.5.0] - 2025-12-11
+
+
+### Bug fixes
+- address PR review comments ([`41f0289`](https://github.com/vim89/toon4s/commit/41f0289fc5beb2ff7567aa0234552db88a7dcff2)) by @vim89
+- restore SparkDatasetOpsTest with placeholder tests ([`2b5fea6`](https://github.com/vim89/toon4s/commit/2b5fea6e3ee52bb2d18628d809db075b2f20a1f7)) by @vim89
+- escape dollar signs in scaladoc code examples ([`acbce59`](https://github.com/vim89/toon4s/commit/acbce596cfd78afdcc7e8eb46850501d5637f977)) by @vim89
+
+
+
+### Chores
+- apply scalafmt formatting after merge ([`abbab85`](https://github.com/vim89/toon4s/commit/abbab850de8689fca9afcd86c8a0b9a952421e8e)) by @vim89
+
+
+
+### Continuous Integration
+- update workflows for multi-module publishing ([`fd6ba39`](https://github.com/vim89/toon4s/commit/fd6ba397689d4085a233d100fe04638471f49865)) by @vim89
+- update workflows for multi-module publishing ([`638f08e`](https://github.com/vim89/toon4s/commit/638f08ecabf46aaec025dad9aa45eec2678e8d52)) by @vim89
+
+
+
+### Documentation
+- update CHANGELOG.md for main [skip ci] ([`ce3340d`](https://github.com/vim89/toon4s/commit/ce3340d2606191fd64e346747c033c5956351f12)) by @github-actions[bot]
+- fix mermaid diagram color format ([`4c68339`](https://github.com/vim89/toon4s/commit/4c683395e16e2d5f325a4d719de87b00b01befcb)) by @vim89
+- diagrams [skip ci] [skip release] ([`8da3895`](https://github.com/vim89/toon4s/commit/8da38959f46b85332d0db7469c1ced7d8affcc06)) by @vim89
+- add comprehensive README for spark integration module ([`f285721`](https://github.com/vim89/toon4s/commit/f2857219311a1185d72589646583e047b4280a82)) by @vim89
+- add architecture design section to spark README ([`9bcd293`](https://github.com/vim89/toon4s/commit/9bcd2939b23570ea863979362490884a762afbfb)) by @vim89
+- spark-integration README update ([`6c602bc`](https://github.com/vim89/toon4s/commit/6c602bcf587f8de2835fa00978341b598f5db853)) by @vim89
+- update spark README.md [skip ci] [skip release] ([`6e537de`](https://github.com/vim89/toon4s/commit/6e537de3c29aa266261d178dc06e634c2187ac09)) by @vim89
+
+
+
+### Features
+- add spark integration module with DataFrame-TOON conversion ([`2251f72`](https://github.com/vim89/toon4s/commit/2251f72e7830660136211dcaf787b09d956888a0)) by @vim89
+- add type-safe Dataset[T] support for toon4s-spark ([`48b455d`](https://github.com/vim89/toon4s/commit/48b455d3a5f7463878c8d81a8b38b1bf086e5a96)) by @vim89
+- apache spark integration ([`546625e`](https://github.com/vim89/toon4s/commit/546625ebe3794622184d12945382850f53fe65d2)) [#48](https://github.com/vim89/toon4s/pull/48) by @vim89
+
+
+
+### Refactoring
+- align LlmClient with llm4s conversation model and design patterns ([`bf38c43`](https://github.com/vim89/toon4s/commit/bf38c43df98e26f4294c51d93318802664c92f4a)) by @vim89
+
+
+
+### Chroe
+- scalafmt ([`2d39027`](https://github.com/vim89/toon4s/commit/2d39027f8b681209ce3a76e6ffbdc40877a59a05)) by @vim89
+- cleanup ([`79c8072`](https://github.com/vim89/toon4s/commit/79c8072e19e6c6a182a2943681c8872c3089f171)) by @vim89
+- fix unit tests ([`87c5ff9`](https://github.com/vim89/toon4s/commit/87c5ff9650eb4c1afac1c0942e13eb2d681e68d3)) by @vim89
+- cleanup ([`ae3979a`](https://github.com/vim89/toon4s/commit/ae3979a663710c0864610721595aa0a69e44c687)) by @vim89
+- cleanup ([`7d1b383`](https://github.com/vim89/toon4s/commit/7d1b3832ac6cdbb7d21a0c090d711205a4b460e3)) by @vim89
+- cleanup ([`61f9992`](https://github.com/vim89/toon4s/commit/61f9992a71f8cb44a82349d3576e8142e3c56f59)) by @vim89
+- scalafmt run automatically only on non-Windows platforms ([`459b547`](https://github.com/vim89/toon4s/commit/459b547ffe1eb0473d4aeb82388935d2e7954f6c)) by @vim89
+- cleanup ([`b5a8d47`](https://github.com/vim89/toon4s/commit/b5a8d47dbbf796802173372c1f6837852d5b5d7f)) by @vim89
+- Remove the old toon4s compare module ([`fb76a2d`](https://github.com/vim89/toon4s/commit/fb76a2d3a5430e03ea03d7a1b9a6809a11ff0ab9)) by @vim89
+
+
 ## [0.4.4] - 2025-12-10
 
 

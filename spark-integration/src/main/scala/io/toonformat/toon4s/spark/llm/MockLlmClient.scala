@@ -69,9 +69,9 @@ class MockLlmClient(
     }
   }
 
-  def getContextWindow(): Int = config.contextWindow
+  def getContextWindow: Int = config.contextWindow
 
-  def getReserveCompletion(): Int = config.reserveCompletion
+  def getReserveCompletion: Int = config.reserveCompletion
 
 }
 
@@ -99,8 +99,8 @@ object MockLlmClient {
       Left(LlmError.ApiError("mock", "Mock failure", Some(500)))
     }
 
-    def getContextWindow(): Int = config.contextWindow
-    def getReserveCompletion(): Int = config.reserveCompletion
+    def getContextWindow: Int = config.contextWindow
+    def getReserveCompletion: Int = config.reserveCompletion
   }
 
   /** Create mock client with specific config. */

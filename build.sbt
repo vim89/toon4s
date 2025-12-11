@@ -36,7 +36,12 @@ ThisBuild / scmInfo := Some(
   )
 )
 
-ThisBuild / scalafmtOnCompile := true
+ThisBuild / scalafmtOnCompile := {
+  // scalafmt has issues resolving the config path on Windows CI,
+  // so only run it automatically on non-Windows platforms.
+  val os = sys.props.getOrElse("os.name", "").toLowerCase
+  !os.contains("windows")
+}
 
 ThisBuild / versionScheme := Some("early-semver")
 

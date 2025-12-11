@@ -1,6 +1,7 @@
 package io.toonformat.toon4s.spark
 
 import scala.collection.immutable.VectorMap
+import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 import io.toonformat.toon4s.JsonValue
@@ -121,7 +122,15 @@ object SparkJsonInterop {
   // ========== Complex Types (Recursive) ==========
 
   case ArrayType(elementType, _) =>
-    val seq = value.asInstanceOf[Seq[_]]
+    val seq: scala.collection.Seq[_] = value match {
+    case s: scala.collection.Seq[_] => s
+    case a: Array[_]                => a.toSeq
+    case l: java.util.List[_]       => l.asScala.toSeq
+    case other                      =>
+      throw new IllegalArgumentException(
+        s"Unsupported array value type: ${other.getClass.getName}"
+      )
+    }
     val jsonValues = seq.map { elem =>
       if (elem == null) JNull
       else fieldToJsonValue(elem, elementType)

@@ -93,10 +93,17 @@ object SparkToonOps {
       // Step 2: Convert to JsonValue
       rowsResult.flatMap { rows =>
         val schema = df.schema
-        convertRowsToJsonArray(rows, schema).flatMap { jsonArray =>
-          // Step 3: Chunk and encode
-          encodeChunks(jsonArray, key, maxRowsPerChunk, options)
-        }
+        convertRowsToJsonArray(rows, schema)
+          .left
+          .map { err =>
+            // Debugging hook to surface conversion issues during tests
+            println(s"[SparkToonOps.toToon] Conversion error: ${err.message}")
+            err
+          }
+          .flatMap { jsonArray =>
+            // Step 3: Chunk and encode
+            encodeChunks(jsonArray, key, maxRowsPerChunk, options)
+          }
       }
     }
 
@@ -139,16 +146,24 @@ object SparkToonOps {
         convertRowsToJsonArray(rows, schema).flatMap { jsonArray =>
           val wrapped = JObj(VectorMap(key -> jsonArray))
 
-          // Encode as TOON and JSON
-          for {
-            toonStr <- encodeSafe(wrapped, options)
-            jsonStr <- encodeSafe(wrapped, EncodeOptions()) // Baseline JSON
-          } yield ToonMetrics.fromEncodedStrings(
-            jsonEncoded = jsonStr,
-            toonEncoded = toonStr,
-            rowCount = rows.length,
-            columnCount = schema.fields.length,
-          )
+          // Encode as TOON and JSON baseline (for token comparison).
+          val jsonBaseline = encodeAsJson(wrapped)
+
+          encodeSafe(wrapped, options).map { toonStr =>
+            val jsonLen = jsonBaseline.length
+            val toonLen = toonStr.length
+            val metrics = ToonMetrics.fromEncodedStrings(
+              jsonEncoded = jsonBaseline,
+              toonEncoded = toonStr,
+              rowCount = rows.length,
+              columnCount = schema.fields.length,
+            )
+            // Debugging hook to surface metrics during tests
+            println(
+              s"[SparkToonOps.toonMetrics] rows=${rows.length}, cols=${schema.fields.length}, jsonLen=$jsonLen, toonLen=$toonLen, jsonTokens=${metrics.jsonTokenCount}, toonTokens=${metrics.toonTokenCount}, savings=${metrics.savingsPercent}%.2f"
+            )
+            metrics
+          }
         }
       }
     }
@@ -218,7 +233,7 @@ object SparkToonOps {
 
     // Step 2: Sequence Either values (short-circuit on first error)
     sequence(decodedResults).flatMap { jsonValues =>
-      // Step 3: Extract rows from decoded JSON
+      // Step 3: Extract rows from decoded JSON (robust to nested wrappers)
       val rows = extractRows(jsonValues)
 
       // Step 4: Convert to Spark Rows
@@ -279,7 +294,11 @@ object SparkToonOps {
       options: EncodeOptions,
   ): Either[SparkToonError, Vector[String]] = {
 
-    val chunks = jsonArray.value.grouped(maxRowsPerChunk).toVector
+    val rawChunks = jsonArray.value.grouped(maxRowsPerChunk).toVector
+    // Ensure we always emit at least one chunk, even for empty inputs
+    val chunks =
+      if (rawChunks.isEmpty) Vector(Vector.empty[JsonValue])
+      else rawChunks
 
     // Encode each chunk, short-circuiting on first error
     val chunkResults = chunks.map { chunk =>
@@ -312,17 +331,63 @@ object SparkToonOps {
    * Handles both wrapped (JObj with key) and unwrapped (direct JArray) formats.
    */
   private def extractRows(jsonValues: Vector[JsonValue]): Vector[JsonValue] = {
-    jsonValues.flatMap {
-      case JObj(fields) =>
-        // Extract first JArray value (usually the data field)
-        fields.values.collectFirst { case JArray(rows) => rows }
-      case JArray(rows) =>
-        // Direct array
-        Some(rows)
-      case _ =>
-        // Skip non-array values
-        None
-    }.flatten
+    def findRowArray(value: JsonValue): Option[Vector[JsonValue]] = value match {
+    // Direct array of row objects
+    case JArray(rows) if rows.forall {
+          case JObj(_) => true
+          case _       => false
+        } =>
+      Some(rows)
+
+    // Object wrapper – search values recursively
+    case JObj(fields) =>
+      fields.valuesIterator
+        .collectFirst {
+          case v if findRowArray(v).isDefined => findRowArray(v).get
+        }
+
+    // Other JSON shapes are ignored
+    case _ => None
+    }
+
+    jsonValues.flatMap(v => findRowArray(v).getOrElse(Vector.empty))
+  }
+
+  /** Encode a JsonValue as a minimal JSON string for baseline token estimates. */
+  private def encodeAsJson(value: JsonValue): String = {
+    def escapeString(s: String): String = {
+      val sb = new StringBuilder(s.length + 16)
+      s.foreach {
+        case '"'              => sb.append("\\\"")
+        case '\\'             => sb.append("\\\\")
+        case '\b'             => sb.append("\\b")
+        case '\f'             => sb.append("\\f")
+        case '\n'             => sb.append("\\n")
+        case '\r'             => sb.append("\\r")
+        case '\t'             => sb.append("\\t")
+        case c if c.isControl =>
+          sb.append(f"\\u${c.toInt}%04x")
+        case c =>
+          sb.append(c)
+      }
+      sb.result()
+    }
+
+    def encode(value: JsonValue): String = value match {
+    case JsonValue.JNull          => "null"
+    case JsonValue.JBool(b)       => if (b) "true" else "false"
+    case JsonValue.JNumber(n)     => n.bigDecimal.stripTrailingZeros.toPlainString
+    case JsonValue.JString(s)     => "\"" + escapeString(s) + "\""
+    case JsonValue.JArray(values) =>
+      values.iterator.map(encode).mkString("[", ",", "]")
+    case JsonValue.JObj(fields) =>
+      fields
+        .iterator
+        .map { case (k, v) => "\"" + escapeString(k) + "\":" + encode(v) }
+        .mkString("{", ",", "}")
+    }
+
+    encode(value)
   }
 
   /**

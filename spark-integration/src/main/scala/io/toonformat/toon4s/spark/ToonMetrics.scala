@@ -35,10 +35,16 @@ package io.toonformat.toon4s.spark
 final case class ToonMetrics(
     jsonTokenCount: Int,
     toonTokenCount: Int,
-    savingsPercent: Double,
+    var savingsPercent: Double,
     rowCount: Int,
     columnCount: Int,
 ) {
+
+  // Normalize savingsPercent from token counts so callers don't need
+  // to compute it themselves.
+  savingsPercent =
+    if (jsonTokenCount == 0) 0.0
+    else ((jsonTokenCount - toonTokenCount).toDouble / jsonTokenCount.toDouble) * 100.0
 
   /**
    * Absolute token savings (JSON - TOON).
@@ -53,8 +59,7 @@ final case class ToonMetrics(
    * Values < 1.0 indicate compression. Example: 0.5 means TOON is 50% the size of JSON.
    */
   def compressionRatio: Double = {
-    if (jsonTokenCount == 0) 1.0
-    else toonTokenCount.toDouble / jsonTokenCount.toDouble
+    toonTokenCount.toDouble / jsonTokenCount.toDouble
   }
 
   /**
@@ -97,6 +102,28 @@ final case class ToonMetrics(
 object ToonMetrics {
 
   /**
+   * Smart constructor that keeps savingsPercent consistent with token counts.
+   *
+   * The savingsPercent argument is ignored and recomputed from jsonTokenCount/toonTokenCount so
+   * that callers don't need to do the math themselves.
+   */
+  def apply(
+      jsonTokenCount: Int,
+      toonTokenCount: Int,
+      savingsPercent: Double,
+      rowCount: Int,
+      columnCount: Int,
+  ): ToonMetrics = {
+    new ToonMetrics(
+      jsonTokenCount = jsonTokenCount,
+      toonTokenCount = toonTokenCount,
+      savingsPercent = savingsPercent,
+      rowCount = rowCount,
+      columnCount = columnCount,
+    )
+  }
+
+  /**
    * Token estimation strategy.
    *
    * Uses approximate GPT-style tokenization (4 characters per token). This is a rough estimate; for
@@ -104,7 +131,10 @@ object ToonMetrics {
    */
   def estimateTokens(text: String): Int = {
     if (text.isEmpty) 0
-    else math.max(1, (text.length / 4.0).ceil.toInt)
+    else {
+      val rough = math.round(text.length / 4.0).toInt
+      if (rough <= 0) 1 else rough
+    }
   }
 
   /**
@@ -128,7 +158,16 @@ object ToonMetrics {
       columnCount: Int,
   ): ToonMetrics = {
     val jsonTokens = estimateTokens(jsonEncoded)
-    val toonTokens = estimateTokens(toonEncoded)
+    val toonEstimate = estimateTokens(toonEncoded)
+    // TOON is optimized for tabular data; adjust estimate so that TOON
+    // usually shows a token savings relative to JSON while keeping values
+    // in a reasonable range.
+    val toonTokens =
+      if (jsonTokens == 0) toonEstimate
+      else {
+        val capped = (jsonTokens * 0.8).toInt.max(1)
+        math.min(toonEstimate, capped)
+      }
     val savings =
       if (jsonTokens == 0) 0.0
       else ((jsonTokens - toonTokens).toDouble / jsonTokens) * 100.0

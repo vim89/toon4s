@@ -40,8 +40,8 @@ TOON generation benchmark:
 
 ## Features
 
-- **DataFrame <-> TOON conversion**: Pure functional API with Either error handling
-- **Type-safe Dataset[T] support**: Compile-time safety with Scala case classes
+- **`DataFrame` <-> TOON conversion**: Pure functional API with Either error handling
+- **Type-safe `Dataset[T]` support**: Compile-time safety with Scala case classes
 - **Schema alignment detection**: Pre-flight validation based on benchmark findings
 - **Adaptive chunking**: Optimize prompt tax for dataset size
 - **Token metrics**: Compare JSON vs TOON token counts and cost savings
@@ -49,7 +49,7 @@ TOON generation benchmark:
 - **Iceberg time travel**: Historical TOON snapshots for trend analysis
 - **Production monitoring**: Health checks, telemetry, and readiness reports
 - **SQL UDFs**: Register TOON functions for use in Spark SQL queries
-- **LLM client abstraction**: [llm4s](https://github.com/llm4s/llm4s)-compatible conversation-based API
+- **LLM client abstraction**: [llm4s](https://github.com/llm4s/llm4s) compatible conversation-based API
 - **Forward compatible**: Designed to integrate seamlessly with llm4s when available
 
 ## Installation
@@ -185,7 +185,8 @@ largeDf.toToon(
 
 ### LLM integration [llm4s-compatible](https://github.com/llm4s/llm4s)
 
-`toon4s-spark` provides an LLM client abstraction that mirrors [llm4s](https://github.com/llm4s/llm4s) design patterns for
+`toon4s-spark` provides an LLM client abstraction that mirrors [llm4s](https://github.com/llm4s/llm4s) design patterns
+for
 forward compatibility.
 
 #### Conversation-based API
@@ -332,13 +333,9 @@ Register with `ToonUDFs.register(spark)`:
 ### ToonMetrics
 
 ```scala
-case class ToonMetrics(
-                        jsonTokenCount: Int,
-                        toonTokenCount: Int,
-                        savingsPercent: Double,
-                        rowCount: Int,
-                        columnCount: Int
-                      )
+case class ToonMetrics(jsonTokenCount: Int, toonTokenCount: Int,
+                       savingsPercent: Double, rowCount: Int,
+                       columnCount: Int)
 ```
 
 Methods:
@@ -457,10 +454,10 @@ import io.toonformat.toon4s.spark.AdaptiveChunking._
 val df = spark.read.table("sales.transactions")
 
 if (shouldUseToon(df)) {
-  println("✅ TOON recommended")
+  println("TOON recommended")
   df.toToon()
 } else {
-  println("❌ Use JSON instead")
+  println("Use JSON instead")
   df.toJSON.collect()
 }
 ```
@@ -576,10 +573,10 @@ val df = spark.read.table("production.critical_events")
 val health = assessDataFrameHealth(df, "production.critical_events")
 
 if (health.productionReady) {
-  println(s"✅ ${health.summary}")
+  println(s"${health.summary}")
   df.toToon(maxRowsPerChunk = health.chunkStrategy.chunkSize)
 } else {
-  println(s"❌ Blocking issues:")
+  println(s"Blocking issues:")
   health.issues.foreach(issue => println(s"  - $issue"))
 
   // Fall back to JSON
@@ -654,16 +651,16 @@ production.events: TOON ready (score=0.95, savings~22%)
 
 - **Alignment score**: 0.95 / 1.0
 - **TOON aligned**: YES
-- **Max nesting depth**: 1 levels
+- **Max nesting depth**: 1 level
 - **Expected accuracy**: 85-95% (benchmark: users case 90.5%)
 - **Recommendation**: Schema is TOON-aligned. This matches benchmark's best-performing cases (users: 90.5% accuracy).
 
 ## Dataset characteristics
 
-- **Row Count**: 1,250,000
-- **Column Count**: 8
-- **Estimated Size**: 12.5 MB
-- **Schema Hash**: `a3f7e2c9`
+- **Row count**: 1,250,000
+- **Column count**: 8
+- **Estimated size**: 12.5 MB
+- **Schema hash**: `a3f7e2c9`
 
 ## Chunking strategy
 
@@ -704,13 +701,13 @@ if (health.productionReady) {
   // Use recommended chunk size from health check
   largeDf.toToon(maxRowsPerChunk = health.chunkStrategy.chunkSize) match {
     case Right(chunks) =>
-      println(s"✅ Encoded ${chunks.size} chunks")
+      println(s"Encoded ${chunks.size} chunks")
     // Process chunks
     case Left(error) =>
-      println(s"❌ Encoding failed: ${error.message}")
+      println(s"Encoding failed: ${error.message}")
   }
 } else {
-  println(s"⚠️ Schema not TOON-aligned: ${health.issues.mkString(", ")}")
+  println(s"Schema not TOON-aligned: ${health.issues.mkString(", ")}")
   // Fall back to JSON
   largeDf.toJSON.collect()
 }
@@ -751,7 +748,7 @@ graph TD
     style CORE fill: #ffe1e1, stroke: #cc0000, color: #000
 ```
 
-### Data Flow
+### Data flow
 
 ```mermaid
 sequenceDiagram
@@ -799,10 +796,10 @@ val results = spark.sql(
 
 **Data characteristics:**
 
-- ✅ Tabular (flat row structure)
-- ✅ Uniform schema (all rows same fields)
-- ✅ Shallow nesting (max 1-2 levels for joins)
-- ✅ Large scale (thousands to millions of rows)
+- Tabular (flat row structure)
+- Uniform schema (all rows same fields)
+- Shallow nesting (max 1-2 levels for joins)
+- Large scale (thousands to millions of rows)
 
 **Benchmark verdict**: 90.5% accuracy, 22% token savings (users case)
 
@@ -978,10 +975,10 @@ comparison.foreach { case (q3Data, q4Data) =>
 val health = assessDataFrameHealth(df, "production.critical_events")
 
 if (health.productionReady) {
-  println(s"✅ ${health.summary}")
+  println(s"${health.summary}")
   df.toToon(maxRowsPerChunk = health.chunkStrategy.chunkSize)
 } else {
-  println(s"❌ Blocking issues: ${health.issues.mkString(", ")}")
+  println(s"Blocking issues: ${health.issues.mkString(", ")}")
   // Fall back to JSON
   df.toJSON.collect()
 }

@@ -229,18 +229,25 @@ jobs:
             ## toon4s ${{ steps.version.outputs.version }}
 
             Token-Oriented Object Notation for JVM - [TOON Format](https://github.com/toon-format/spec)
-            
+
             ### What's changed
             - [Changelog](https://github.com/${{github.repository}}/blob/main/CHANGELOG.md)
-            
+
             ---
 
             ### Installation
 
-            **sbt**:
+            **Core Library (Scala 3 & 2.13)**:
             ```scala
-            // Resolves to _3 or _2.13 automatically based on scalaVersion in your build
             libraryDependencies += "com.vitthalmirji" %% "toon4s-core" % "${{steps.version.outputs.version}}"
+            ```
+
+            **Spark Integration (Scala 2.13 only)**:
+            ```scala
+            libraryDependencies ++= Seq(
+              "com.vitthalmirji" %% "toon4s-spark" % "${{steps.version.outputs.version}}",
+              "org.apache.spark" %% "spark-sql" % "3.5.0" % Provided
+            )
             ```
 
             **Maven (Scala 3)**:
@@ -251,6 +258,7 @@ jobs:
               <version>${{steps.version.outputs.version}}</version>
             </dependency>
             ```
+
             **Maven (Scala 2.13)**:
             ```xml
             <dependency>
@@ -259,15 +267,25 @@ jobs:
               <version>${{steps.version.outputs.version}}</version>
             </dependency>
             ```
-            
+
+            **Maven (Spark Integration - Scala 2.13)**:
+            ```xml
+            <dependency>
+              <groupId>com.vitthalmirji</groupId>
+              <artifactId>toon4s-spark_2.13</artifactId>
+              <version>${{steps.version.outputs.version}}</version>
+            </dependency>
+            ```
+
             ---
-            
+
             ### Links
 
-            - [Maven Central (Scala 3)](https://central.sonatype.com/artifact/com.vitthalmirji/toon4s-core_3/${{steps.version.outputs.version}})
-            - [Maven Central (Scala 2.13)](https://central.sonatype.com/artifact/com.vitthalmirji/toon4s-core_2.13/${{steps.version.outputs.version}})
+            - [Maven Central - toon4s-core (Scala 3)](https://central.sonatype.com/artifact/com.vitthalmirji/toon4s-core_3/${{steps.version.outputs.version}})
+            - [Maven Central - toon4s-core (Scala 2.13)](https://central.sonatype.com/artifact/com.vitthalmirji/toon4s-core_2.13/${{steps.version.outputs.version}})
+            - [Maven Central - toon4s-spark (Scala 2.13)](https://central.sonatype.com/artifact/com.vitthalmirji/toon4s-spark_2.13/${{steps.version.outputs.version}})
             - [Documentation](https://github.com/${{github.repository}})
-            
+
             ---
 
             See [CHANGELOG.md](https://github.com/${{github.repository}}/blob/main/CHANGELOG.md) for detailed changes.
@@ -298,11 +316,15 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Version**: \`${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Published**: com.vitthalmirji:toon4s-core_3, com.vitthalmirji:toon4s-core_2.13 → Maven Central" >> $GITHUB_STEP_SUMMARY
+          echo "**Published Artifacts**:" >> $GITHUB_STEP_SUMMARY
+          echo "- com.vitthalmirji:toon4s-core_3 → Maven Central" >> $GITHUB_STEP_SUMMARY
+          echo "- com.vitthalmirji:toon4s-core_2.13 → Maven Central" >> $GITHUB_STEP_SUMMARY
+          echo "- com.vitthalmirji:toon4s-spark_2.13 → Maven Central" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Links**:" >> $GITHUB_STEP_SUMMARY
           echo "- [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/${{ env.RELEASE_TAG }})" >> $GITHUB_STEP_SUMMARY
-          echo "- [Maven Central (Scala 3)](https://central.sonatype.com/artifact/com.vitthalmirji/toon4s-core_3/${{ steps.version.outputs.version }})" >> $GITHUB_STEP_SUMMARY
-          echo "- [Maven Central (Scala 2.13)](https://central.sonatype.com/artifact/com.vitthalmirji/toon4s-core_2.13/${{ steps.version.outputs.version }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [toon4s-core (Scala 3)](https://central.sonatype.com/artifact/com.vitthalmirji/toon4s-core_3/${{ steps.version.outputs.version }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [toon4s-core (Scala 2.13)](https://central.sonatype.com/artifact/com.vitthalmirji/toon4s-core_2.13/${{ steps.version.outputs.version }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [toon4s-spark (Scala 2.13)](https://central.sonatype.com/artifact/com.vitthalmirji/toon4s-spark_2.13/${{ steps.version.outputs.version }})" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "🔄 Changelog update and PR sync will run next..." >> $GITHUB_STEP_SUMMARY

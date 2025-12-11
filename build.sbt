@@ -152,6 +152,7 @@ addCommandAlias(
 
 lazy val sparkIntegration = (project in file("spark-integration"))
   .dependsOn(core)
+  .enablePlugins(MimaPlugin)
   .settings(
     name := "toon4s-spark",
     // Override scalaVersion to Scala 2.13 (Spark doesn't support Scala 3)
@@ -192,5 +193,14 @@ lazy val sparkIntegration = (project in file("spark-integration"))
       "toon4s-spark",
       "-doc-version",
       version.value,
+    ),
+    // MiMa configuration for binary compatibility checking
+    mimaPreviousArtifacts := Set(
+      // Will be uncommented after first release
+      // organization.value %% moduleName.value % "0.1.0"
+    ),
+    // Exclude known binary incompatible changes (add as needed)
+    mimaBinaryIssueFilters := Seq(
+      // Example: ProblemFilters.exclude[Problem]("io.toonformat.toon4s.spark.InternalClass")
     ),
   )
